@@ -53,6 +53,6 @@ void SearchingDialog::displayRow(QList<QString> result)
     ui->tableWidget->setItem(tableRowCount, 1, clientName);
     ui->tableWidget->setItem(tableRowCount, 2, clientPhoneNum);
     ui->tableWidget->setItem(tableRowCount, 3, clientAddress);
-
+    //github testing text
 }
 
