@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
 //    connect(dlg, SIGNAL(searchClientName(QString)), orderForm, SLOT(searchClientName(QString)));
 //    connect(this, SIGNAL(returnDialog(int)), dlg, SLOT(returnId(int)));
     dlg->hide();
-    connect(orderForm, SIGNAL(clickedSearchButton()), dlg, SLOT(on_lineEdit_returnPressed()));
+    connect(orderForm, SIGNAL(clickedSearchButton()), dlg, SLOT(openDialog()));
 
     connect(ui->action_Client_Manager, SIGNAL(triggered()), this, SLOT(clientTabAction()));
     connect(this, SIGNAL(triggeredClientAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));

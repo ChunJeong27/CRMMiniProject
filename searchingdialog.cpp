@@ -19,11 +19,6 @@ SearchingDialog::~SearchingDialog()
     delete ui;
 }
 
-void SearchingDialog::on_lineEdit_returnPressed()
-{
-//    show();
-}
-
 void SearchingDialog::returnId(int id)
 {
     QTableWidgetItem* searchId = new QTableWidgetItem;
@@ -36,6 +31,12 @@ void SearchingDialog::returnId(int id)
 
 void SearchingDialog::on_pushButton_clicked()
 {
+
     emit searchClientName(ui->lineEdit->text());
+}
+
+void SearchingDialog::openDialog()
+{
+    show();
 }
 

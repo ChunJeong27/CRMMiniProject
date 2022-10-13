@@ -22,7 +22,6 @@ OrderForm::OrderForm(QWidget *parent) :
     connect(ui->productNameLineEdit, SIGNAL(returnPressed()), this, SLOT(searchProductName()));
 
     connect(ui->searchPushButton, SIGNAL(clicked()), this, SIGNAL(clickedSearchButton()));
-    //fwehfowef
 }
 
 OrderForm::~OrderForm()

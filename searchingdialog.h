@@ -23,9 +23,9 @@ signals:
 
 public slots:
     void returnId(int);
+    void openDialog();
 
 private slots:
-    void on_lineEdit_returnPressed();
 
     void on_pushButton_clicked();
 
