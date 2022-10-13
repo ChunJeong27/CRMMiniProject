@@ -27,13 +27,6 @@ void SearchingDialog::returnId(int id)
     emit searchedClientId(QString::number(id));
 }
 
-
-void SearchingDialog::on_pushButton_clicked()
-{
-
-    emit searchedClientId(ui->lineEdit->text());
-}
-
 void SearchingDialog::openDialog()
 {
     show();
@@ -54,5 +47,11 @@ void SearchingDialog::displayRow(QList<QString> result)
     ui->tableWidget->setItem(tableRowCount, 2, clientPhoneNum);
     ui->tableWidget->setItem(tableRowCount, 3, clientAddress);
     //github testing text
+}
+
+
+void SearchingDialog::on_clientPushButton_clicked()
+{
+    emit searchedClientId(ui->lineEdit->text());
 }
 

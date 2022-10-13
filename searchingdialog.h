@@ -29,7 +29,7 @@ public slots:
 
 private slots:
 
-    void on_pushButton_clicked();
+    void on_clientPushButton_clicked();
 
 private:
     Ui::SearchingDialog *ui;
