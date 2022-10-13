@@ -144,7 +144,7 @@ void ClientForm::on_removePushButton_clicked()
     ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
-void ClientForm::searchClientId(QString id)
+void ClientForm::clientSearching(QString id)
 {
     QList<QTableWidgetItem*> searchingResult;
     searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
@@ -159,7 +159,7 @@ void ClientForm::searchClientId(QString id)
                  << ui->tableWidget->item(searchingRow, 2)->text()
                  <<ui->tableWidget->item(searchingRow, 3)->text();
 
-    emit clientIdSearchingResult(returnResult);
+    emit returnSearching(returnResult);
 }
 
 void ClientForm::on_nameLineEdit_returnPressed()
@@ -250,7 +250,7 @@ void ClientForm::searchClientName(QString name)
                  <<ui->tableWidget->item(searchingRow, 3)->text();
 
     qDebug("-1");
-    emit clientIdSearchingResult(returnResult);
+    emit returnSearching(returnResult);
     qDebug("1");
 //    emit clientSearchingResult(ui->tableWidget->item(searchingRow, 0)->text());
 }

@@ -21,13 +21,13 @@ private:
     QList<QTableWidgetItem*> searchingList;
 
 signals:
-    void clientIdSearchingResult(QList<QString>);
+    void returnSearching(QList<QString>);
     void clientId(int);
 
 public slots:
     int makeId();
     void displayItem(int,int);
-    void searchClientId(QString);
+    void clientSearching(QString);
     void searchClientName(QString);
     void searchClientReturnId(QString);
 

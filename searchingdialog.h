@@ -20,10 +20,12 @@ protected:
 
 signals:
     void searchClientName(QString);
+    void searchedClientId(QString);
 
 public slots:
     void returnId(int);
     void openDialog();
+    void displayRow(QList<QString>);
 
 private slots:
 
