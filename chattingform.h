@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+class QTcpSocket;
+
 namespace Ui {
 class ChattingForm;
 }
@@ -17,6 +19,13 @@ public:
 
 private:
     Ui::ChattingForm *ui;
+
+private slots:
+    void echoData();
+    void sendData();
+
+private:
+    QTcpSocket *clientSocket;
 };
 
 #endif // CHATTINGFORM_H

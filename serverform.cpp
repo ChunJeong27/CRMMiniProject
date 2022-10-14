@@ -16,7 +16,7 @@ ServerForm::ServerForm(QWidget *parent) :
 
     tcpServer = new QTcpServer(this);
     connect(tcpServer, SIGNAL(newConnection()), SLOT(clientConnect()));
-    if(!tcpServer->listen(QHostAddress::Any, 8000)){
+    if(!tcpServer->listen(QHostAddress::Any, 9000)){
         QMessageBox::critical(this, tr("Echo Server"),
                               tr("Unable to start the server: %1.")
                               .arg(tcpServer->errorString()));
