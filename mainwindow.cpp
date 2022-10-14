@@ -5,6 +5,7 @@
 #include "productform.h"
 #include "orderform.h"
 #include "searchingdialog.h"
+#include "serverForm.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(productForm, "Product Manager");
     orderForm = new OrderForm;
     ui->tabWidget->addTab(orderForm, "Order Manager");
+    serverForm = new ServerForm;
+    ui->tabWidget->addTab(serverForm, "Chatting Server");
 
     SearchingDialog* dlg = new SearchingDialog;
 //    connect(dlg, SIGNAL(searchClientName(QString)), orderForm, SLOT(searchClientName(QString)));

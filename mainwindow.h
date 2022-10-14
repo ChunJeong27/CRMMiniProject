@@ -6,6 +6,7 @@
 class ClientForm;
 class ProductForm;
 class OrderForm;
+class ServerForm;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,6 +24,7 @@ private:
     ClientForm* clientForm;
     ProductForm* productForm;
     OrderForm* orderForm;
+    ServerForm* serverForm;
 
 signals:
     void triggeredClientAction(QWidget*);
