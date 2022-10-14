@@ -24,6 +24,7 @@ private:
 private slots:
     void clientConnect();
     void echoData();
+    void removeItem();
 
 private:
     QTcpServer *tcpServer;

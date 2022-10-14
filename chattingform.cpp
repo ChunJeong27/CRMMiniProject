@@ -19,7 +19,7 @@ ChattingForm::ChattingForm(QWidget *parent) :
     connect(clientSocket, SIGNAL(readyRead()), SLOT(echoData()));
 //    setWindowTitle(tr("Echo Client"));
 
-    clientSocket->connectToHost("127.0.0.1", 9000);
+    clientSocket->connectToHost("127.0.0.1", 19000);
 }
 
 ChattingForm::~ChattingForm()

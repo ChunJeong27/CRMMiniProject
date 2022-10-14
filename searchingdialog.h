@@ -20,7 +20,7 @@ protected:
 
 signals:
     void searchClientName(QString);
-    void searchedClientId(QString);
+    void searchedClient(int, QString);
 
 public slots:
     void returnId(int);

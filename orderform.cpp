@@ -12,13 +12,13 @@ OrderForm::OrderForm(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->tableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(displayItem(int,int)));
-    connect(ui->orderIdLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
+//    connect(ui->orderIdLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
     connect(ui->quantityLineEdit, &QLineEdit::returnPressed, this,
             [=](){quint32 amount = ui->productPriceLineEdit->text().toUInt() * ui->quantityLineEdit->text().toUInt();
         ui->amountLineEdit->setText(QString::number(amount));});
 
 
-    connect(ui->clientNameLineEdit, SIGNAL(returnPressed()), this, SLOT(searchClientName()));
+//    connect(ui->clientNameLineEdit, SIGNAL(returnPressed()), this, SLOT(searchClientName()));
     connect(ui->productNameLineEdit, SIGNAL(returnPressed()), this, SLOT(searchProductName()));
 
     connect(ui->searchPushButton, SIGNAL(clicked()), this, SIGNAL(clickedSearchButton()));

@@ -27,7 +27,7 @@ signals:
 public slots:
     int makeId();
     void displayItem(int,int);
-    void clientSearching(QString);
+    void clientSearching(int, QString);
     void searchClientName(QString);
     void searchClientReturnId(QString);
 

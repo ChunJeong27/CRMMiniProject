@@ -144,7 +144,7 @@ void ClientForm::on_removePushButton_clicked()
     ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
-void ClientForm::clientSearching(QString id)
+void ClientForm::clientSearching(int type, QString id)
 {
     QList<QTableWidgetItem*> searchingResult;
     searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
@@ -153,11 +153,15 @@ void ClientForm::clientSearching(QString id)
 
     QList<QString> returnResult;
 
-    int searchingRow = searchingResult.first()->row();
-    returnResult << ui->tableWidget->item(searchingRow, 0)->text()
-                 << ui->tableWidget->item(searchingRow, 1)->text()
-                 << ui->tableWidget->item(searchingRow, 2)->text()
-                 <<ui->tableWidget->item(searchingRow, 3)->text();
+    Q_FOREACH( QTableWidgetItem* item, searchingResult ){
+        if( item->column() == type ){
+            int searchingRow = item->row();
+            returnResult << ui->tableWidget->item(searchingRow, 0)->text()
+                         << ui->tableWidget->item(searchingRow, 1)->text()
+                         << ui->tableWidget->item(searchingRow, 2)->text()
+                         <<ui->tableWidget->item(searchingRow, 3)->text();
+        }
+    }
 
     emit returnSearching(returnResult);
 }
