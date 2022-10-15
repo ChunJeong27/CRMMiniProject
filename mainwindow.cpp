@@ -25,14 +25,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     chattingForm = new ChattingForm;
     ui->dockWidget->setWidget(chattingForm);
+    ui->dockWidget->setFloating(true);
 
     SearchingDialog* dlg = new SearchingDialog;
-//    connect(dlg, SIGNAL(searchClientName(QString)), orderForm, SLOT(searchClientName(QString)));
-//    connect(this, SIGNAL(returnDialog(int)), dlg, SLOT(returnId(int)));
     dlg->hide();
     connect(orderForm, SIGNAL(clickedSearchButton()), dlg, SLOT(openDialog()));
-    connect(dlg, SIGNAL(searchedClient(int, QString)), clientForm, SLOT(clientSearching(int, QString)));
+    connect(dlg, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(clientSearching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), dlg, SLOT(displayRow(QList<QString>)));
+
+    connect(dlg, SIGNAL(returnOrderForm(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
 
     connect(ui->action_Client_Manager, SIGNAL(triggered()), this, SLOT(clientTabAction()));
     connect(this, SIGNAL(triggeredClientAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
@@ -41,18 +42,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->action_Order_Manager, SIGNAL(triggered()), this, SLOT(orderTabAction()));
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
 
-//    connect(orderForm, SIGNAL(clientReturnPressed(QString)), clientForm, SLOT(searchClientName(QString)));
-    connect(orderForm, SIGNAL(clientReturnPressed(QString)), clientForm, SLOT(searchClientReturnId(QString)));
-//    connect(clientForm, SIGNAL(clientIdSearchingResult(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
     connect(orderForm, SIGNAL(productReturnPressed(QString)), productForm, SLOT(searchProductName(QString)));
     connect(productForm, SIGNAL(productSearchingResult(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
 
-//    connect(orderForm, SIGNAL(searchClientId(QString)), clientForm, SLOT(searchClientId(QString)));
-//    connect(clientForm, SIGNAL(clientIdSearchingResult(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
     connect(orderForm, SIGNAL(searchProductId(QString)), productForm, SLOT(searchProductId(QString)));
     connect(productForm, SIGNAL(productSearchingResult(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
-
-    connect(clientForm, SIGNAL(clientId(int)), orderForm, SLOT(returnId(int)));
 
     orderForm->loadData();
 

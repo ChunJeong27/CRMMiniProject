@@ -92,6 +92,11 @@ void ClientForm::on_addPushButton_clicked()
     QString phoneNum = ui->phoneNumLineEdit->text();
     QString address = ui->addressLineEdit->text();
 
+    ui->idLineEdit->clear();
+    ui->nameLineEdit->clear();
+    ui->phoneNumLineEdit->clear();
+    ui->addressLineEdit->clear();
+
     if ( name.length() <= 0 || phoneNum.length() <= 2 || address.length() <= 0 ) {
         QMessageBox::warning(this, "Client Manager", "Check your input again.", QMessageBox::Ok);
         return;
@@ -141,25 +146,26 @@ void ClientForm::on_modifyPushButton_clicked()
 
 void ClientForm::on_removePushButton_clicked()
 {
-    ui->tableWidget->removeRow(ui->tableWidget->currentRow());
+    if(QMessageBox::warning(this, "Client Information Remove", "Are you sure you want to delete it?",
+                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel) == QMessageBox::Yes)
+        ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
-void ClientForm::clientSearching(int type, QString id)
+void ClientForm::clientSearching(int type, QString content)
 {
     QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
+    searchingResult = ui->tableWidget->findItems(content, Qt::MatchFixedString);
 
     if(searchingResult.empty())     return;
 
     QList<QString> returnResult;
-
     Q_FOREACH( QTableWidgetItem* item, searchingResult ){
         if( item->column() == type ){
             int searchingRow = item->row();
             returnResult << ui->tableWidget->item(searchingRow, 0)->text()
                          << ui->tableWidget->item(searchingRow, 1)->text()
                          << ui->tableWidget->item(searchingRow, 2)->text()
-                         <<ui->tableWidget->item(searchingRow, 3)->text();
+                         << ui->tableWidget->item(searchingRow, 3)->text();
         }
     }
 
@@ -236,40 +242,6 @@ void ClientForm::on_idLineEdit_returnPressed()
     ui->tableWidget->selectRow(searchingRow);
     displayItem(searchingRow, 0);
 }
-
-void ClientForm::searchClientName(QString name)
-{
-    QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(name, Qt::MatchFixedString);
-
-    if(searchingResult.empty())     return;
-
-    QList<QString> returnResult;
-//    qDebug()<<searchingResult.at(1)->text(); return;
-
-    int searchingRow = searchingResult.first()->row();
-    returnResult << ui->tableWidget->item(searchingRow, 0)->text()
-                 << ui->tableWidget->item(searchingRow, 1)->text()
-                 << ui->tableWidget->item(searchingRow, 2)->text()
-                 <<ui->tableWidget->item(searchingRow, 3)->text();
-
-    qDebug("-1");
-    emit returnSearching(returnResult);
-    qDebug("1");
-//    emit clientSearchingResult(ui->tableWidget->item(searchingRow, 0)->text());
-}
-
-void ClientForm::searchClientReturnId(QString name)
-{
-    QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(name, Qt::MatchFixedString);
-
-    if(searchingResult.empty())     return;
-
-    int searchingRow = searchingResult.first()->row();
-    emit clientId(ui->tableWidget->item(searchingRow, 0)->text().toInt());
-}
-
 
 void ClientForm::on_clearPushButton_clicked()
 {

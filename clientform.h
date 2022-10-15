@@ -22,14 +22,11 @@ private:
 
 signals:
     void returnSearching(QList<QString>);
-    void clientId(int);
 
 public slots:
     int makeId();
     void displayItem(int,int);
     void clientSearching(int, QString);
-    void searchClientName(QString);
-    void searchClientReturnId(QString);
 
 private slots:
     void on_addPushButton_clicked();

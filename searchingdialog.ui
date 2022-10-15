@@ -47,7 +47,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget">
+    <widget class="QTableWidget" name="clientTableWidget">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
      <column>
       <property name="text">
        <string>ID</string>
@@ -76,7 +79,7 @@
       <widget class="QComboBox" name="productComboBox"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="productLineEdit"/>
      </item>
      <item>
       <widget class="QPushButton" name="productPushButton">
@@ -88,7 +91,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget_2">
+    <widget class="QTableWidget" name="productTableWidget">
      <column>
       <property name="text">
        <string>ID</string>

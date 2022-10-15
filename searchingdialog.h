@@ -19,13 +19,13 @@ protected:
 //    void closeEvent(QCloseEvent*) override;
 
 signals:
-    void searchClientName(QString);
     void searchedClient(int, QString);
+    void returnOrderForm(QList<QString>);
 
 public slots:
-    void returnId(int);
     void openDialog();
     void displayRow(QList<QString>);
+    void returnSearching(int, int);
 
 private slots:
 
