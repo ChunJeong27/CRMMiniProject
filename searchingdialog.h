@@ -20,16 +20,18 @@ protected:
 
 signals:
     void searchedClient(int, QString);
+    void searchedProduct(int, QString);
     void returnOrderForm(QList<QString>);
 
 public slots:
-    void openDialog();
     void displayRow(QList<QString>);
     void returnSearching(int, int);
 
 private slots:
 
     void on_clientPushButton_clicked();
+
+    void on_productPushButton_clicked();
 
 private:
     Ui::SearchingDialog *ui;

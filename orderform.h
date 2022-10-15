@@ -47,8 +47,6 @@ public slots:
     void addClientResult(QList<QString>);
     void addProductResult(QList<QString>);
 
-    void returnId(int);
-
 
 private slots:
     void on_addPushButton_clicked();

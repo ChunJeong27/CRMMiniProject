@@ -2,6 +2,7 @@
 #include "ui_productform.h"
 
 #include <QFile>
+#include <QMessageBox>
 
 ProductForm::ProductForm(QWidget *parent) :
     QWidget(parent),
@@ -9,9 +10,11 @@ ProductForm::ProductForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->tableWidget, SIGNAL(cellClicked(int,int)),
-            SLOT(displayItem(int,int)));
-    connect(ui->nameLineEdit, SIGNAL(returnPressed()), SLOT(on_searchPushButton_clicked()));
+    connect(ui->nameLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
+    connect(ui->priceLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
+    connect(ui->stockLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
+    connect(ui->tableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(displayItem(int,int)));
+
     loadData();
 }
 
@@ -54,6 +57,7 @@ void ProductForm::loadData()
 
             int tableRowCount = ui->tableWidget->rowCount();
             ui->tableWidget->setRowCount( tableRowCount + 1);
+
             ui->tableWidget->setItem(tableRowCount, 0, productID);
             ui->tableWidget->setItem(tableRowCount, 1, productName);
             ui->tableWidget->setItem(tableRowCount, 2, productPrice);
@@ -78,46 +82,96 @@ int ProductForm::makeId()
 void ProductForm::displayItem(int row,int column)
 {
     Q_UNUSED(column);
+
     ui->idLineEdit->setText(ui->tableWidget->item(row, 0)->text());
     ui->nameLineEdit->setText(ui->tableWidget->item(row, 1)->text());
     ui->priceLineEdit->setText(ui->tableWidget->item(row, 2)->text());
     ui->stockLineEdit->setText(ui->tableWidget->item(row, 3)->text());
 }
 
+void ProductForm::on_clearPushButton_clicked()
+{
+    ui->idLineEdit->clear();
+    ui->nameLineEdit->clear();
+    ui->priceLineEdit->clear();
+    ui->stockLineEdit->clear();
+}
+
 void ProductForm::on_addPushButton_clicked()
 {
-    QTableWidgetItem* productID = new QTableWidgetItem(QString::number(makeId()));
-    QTableWidgetItem* productName = new QTableWidgetItem(ui->nameLineEdit->text());
-    QTableWidgetItem* productPrice = new QTableWidgetItem(ui->priceLineEdit->text());
-    QTableWidgetItem* productStock = new QTableWidgetItem(ui->stockLineEdit->text());
+    QString name = ui->nameLineEdit->text();
+    QString price = ui->priceLineEdit->text();
+    QString stock = ui->stockLineEdit->text();
 
-    int tableRowCount = ui->tableWidget->rowCount();
-    ui->tableWidget->setRowCount( tableRowCount + 1);
-    ui->tableWidget->setItem(tableRowCount, 0, productID);
-    ui->tableWidget->setItem(tableRowCount, 1, productName);
-    ui->tableWidget->setItem(tableRowCount, 2, productPrice);
-    ui->tableWidget->setItem(tableRowCount, 3, productStock);
+    ui->idLineEdit->clear();
+    ui->nameLineEdit->clear();
+    ui->priceLineEdit->clear();
+    ui->stockLineEdit->clear();
+
+    if ( name.length() <= 0 || price.length() <=0 || stock.length() <= 0 ) {
+        QMessageBox::warning(this, "Product Manager", "Check your input again.", QMessageBox::Ok);
+        return;
+    }
+    else {
+        QTableWidgetItem* idItem = new QTableWidgetItem(QString::number(makeId()));
+        QTableWidgetItem* nameItem = new QTableWidgetItem(name);
+        QTableWidgetItem* priceItem = new QTableWidgetItem(price);
+        QTableWidgetItem* stockItem = new QTableWidgetItem(stock);
+
+        int tableRowCount = ui->tableWidget->rowCount();
+        ui->tableWidget->setRowCount( tableRowCount + 1);
+
+        ui->tableWidget->setItem(tableRowCount, 0, idItem);
+        ui->tableWidget->setItem(tableRowCount, 1, nameItem);
+        ui->tableWidget->setItem(tableRowCount, 2, priceItem);
+        ui->tableWidget->setItem(tableRowCount, 3, stockItem);
+    }
 }
 
 
 void ProductForm::on_searchPushButton_clicked()
 {
-    QString searchingName = ui->nameLineEdit->text();
-    QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(searchingName, Qt::MatchFixedString);
+    QLineEdit* lineEdit = qobject_cast<QLineEdit*>(sender());
+    if(lineEdit == nullptr)     return;
 
+    int lineEditType(0);
+    if( lineEdit->objectName() == "nameLineEdit" ){
+        lineEditType = 1;
+    } else if( lineEdit->objectName() == "priceLineEdit" ){
+        lineEditType = 2;
+    } else if( lineEdit->objectName() == "stockLineEdit" ){
+        lineEditType = 3;
+    } else {
+        return;
+    }
 
-    if(searchingResult.empty())     return;
+    QString searchingText = lineEdit->text();
+    if ( searchingList.empty()
+         || searchingList.first()->text().compare(searchingText, Qt::CaseInsensitive)) {
+        searchingList = ui->tableWidget->findItems(searchingText, Qt::MatchFixedString);
+        if(searchingList.empty())     return;
+    }
 
-    int searchingRow = searchingResult.first()->row();
-    ui->tableWidget->selectRow(searchingRow);
-    displayItem(searchingRow, 0);
+    QTableWidgetItem* searchingResult = searchingList.takeFirst();
+    while ( searchingResult->column() != lineEditType ) {
+        if(searchingList.empty())     return;
+        searchingResult = searchingList.takeFirst();
+    }
+
+    int searchingRow = searchingResult->row();
+    int searchingCoulmn = searchingResult->column();
+    if ( searchingCoulmn == lineEditType )
+    {
+        ui->tableWidget->selectRow(searchingRow);
+        displayItem(searchingRow, 0);
+    }
 }
 
 
 void ProductForm::on_modifyPushButton_clicked()
 {
     int tableCurrentRow = ui->tableWidget->currentRow();
+
     QTableWidgetItem* productName = new QTableWidgetItem(ui->nameLineEdit->text());
     QTableWidgetItem* productPrice = new QTableWidgetItem(ui->priceLineEdit->text());
     QTableWidgetItem* productStock = new QTableWidgetItem(ui->stockLineEdit->text());
@@ -130,41 +184,41 @@ void ProductForm::on_modifyPushButton_clicked()
 
 void ProductForm::on_removePushButton_clicked()
 {
+    if(QMessageBox::warning(this, "Product Manager", "Are you sure you want to delete it?",
+                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
     ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
-void ProductForm::searchProductName(QString name)
+void ProductForm::on_idLineEdit_returnPressed()
 {
+    QString searchingText = ui->idLineEdit->text();
     QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(name, Qt::MatchFixedString);
+    searchingResult = ui->tableWidget->findItems(searchingText, Qt::MatchFixedString);
 
     if(searchingResult.empty())     return;
 
-    QList<QString> returnResult;
-
     int searchingRow = searchingResult.first()->row();
-    returnResult << ui->tableWidget->item(searchingRow, 0)->text()
-                 << ui->tableWidget->item(searchingRow, 1)->text()
-                 << ui->tableWidget->item(searchingRow, 2)->text()
-                 <<ui->tableWidget->item(searchingRow, 3)->text();
-
-    emit productSearchingResult(returnResult);
+    ui->tableWidget->selectRow(searchingRow);
+    displayItem(searchingRow, 0);
 }
 
-void ProductForm::searchProductId(QString id)
+void ProductForm::searching(int type, QString content)
 {
     QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
+    searchingResult = ui->tableWidget->findItems(content, Qt::MatchFixedString);
 
     if(searchingResult.empty())     return;
 
     QList<QString> returnResult;
+    Q_FOREACH( QTableWidgetItem* item, searchingResult ){
+        if( item->column() == type ){
+            int searchingRow = item->row();
+            returnResult << ui->tableWidget->item(searchingRow, 0)->text()
+                         << ui->tableWidget->item(searchingRow, 1)->text()
+                         << ui->tableWidget->item(searchingRow, 2)->text()
+                         << ui->tableWidget->item(searchingRow, 3)->text();
+        }
+    }
 
-    int searchingRow = searchingResult.first()->row();
-    returnResult << ui->tableWidget->item(searchingRow, 0)->text()
-                 << ui->tableWidget->item(searchingRow, 1)->text()
-                 << ui->tableWidget->item(searchingRow, 2)->text()
-                 <<ui->tableWidget->item(searchingRow, 3)->text();
-
-    emit productSearchingResult(returnResult);
+    emit returnSearching(returnResult);
 }

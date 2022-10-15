@@ -2,7 +2,8 @@
 #define CLIENTFORM_H
 
 #include <QWidget>
-#include <QTableWidgetItem>
+
+class QTableWidgetItem;
 
 namespace Ui {
 class ClientForm;
@@ -15,6 +16,7 @@ class ClientForm : public QWidget
 public:
     explicit ClientForm(QWidget *parent = nullptr);
     ~ClientForm();
+
     void loadData();
 
 private:
@@ -26,23 +28,20 @@ signals:
 public slots:
     int makeId();
     void displayItem(int,int);
-    void clientSearching(int, QString);
+    void searching(int, QString);
 
 private slots:
+    void on_clearPushButton_clicked();
+
     void on_addPushButton_clicked();
-    void on_modifyPushButton_clicked();
+
     void on_searchPushButton_clicked();
+
+    void on_modifyPushButton_clicked();
+
     void on_removePushButton_clicked();
 
-    void on_nameLineEdit_returnPressed();
-
-    void on_phoneNumLineEdit_returnPressed();
-
-    void on_addressLineEdit_returnPressed();
-
     void on_idLineEdit_returnPressed();
-
-    void on_clearPushButton_clicked();
 
 private:
     Ui::ClientForm *ui;

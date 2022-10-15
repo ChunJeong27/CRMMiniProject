@@ -35,7 +35,7 @@
       <widget class="QComboBox" name="clientComboBox"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="clientLineEdit"/>
      </item>
      <item>
       <widget class="QPushButton" name="clientPushButton">

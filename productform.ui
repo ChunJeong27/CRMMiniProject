@@ -106,7 +106,21 @@
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout">
-           <item row="0" column="0">
+           <item row="4" column="0">
+            <widget class="QPushButton" name="removePushButton">
+             <property name="text">
+              <string>&amp;Remove</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QPushButton" name="searchPushButton">
+             <property name="text">
+              <string>&amp;Search</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
             <widget class="QPushButton" name="addPushButton">
              <property name="minimumSize">
               <size>
@@ -119,24 +133,17 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QPushButton" name="searchPushButton">
-             <property name="text">
-              <string>&amp;Search</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
+           <item row="3" column="0">
             <widget class="QPushButton" name="modifyPushButton">
              <property name="text">
               <string>&amp;Modify</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QPushButton" name="removePushButton">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="clearPushButton">
              <property name="text">
-              <string>&amp;Remove</string>
+              <string>&amp;Clear</string>
              </property>
             </widget>
            </item>

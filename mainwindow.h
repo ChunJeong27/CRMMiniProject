@@ -34,6 +34,9 @@ signals:
     void triggeredOrderAction(QWidget*);
 
 public slots:
+    void createSeachingDialog();
+
+public slots:
     void clientTabAction();
     void productTabAction();
     void orderTabAction();

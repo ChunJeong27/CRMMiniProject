@@ -13,8 +13,8 @@ OrderForm::OrderForm(QWidget *parent) :
 
     connect(ui->tableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(displayItem(int,int)));
 //    connect(ui->orderIdLineEdit, SIGNAL(returnPressed()), this, SLOT(on_searchPushButton_clicked()));
-    connect(ui->quantityLineEdit, &QLineEdit::returnPressed, this,
-            [=](){quint32 amount = ui->productPriceLineEdit->text().toUInt() * ui->quantityLineEdit->text().toUInt();
+    connect(ui->quantitySpinBox, &QSpinBox::valueChanged, this,
+            [=](int i){quint32 amount = ui->productPriceLineEdit->text().toUInt() * i;
         ui->amountLineEdit->setText(QString::number(amount));});
 
 
@@ -114,7 +114,7 @@ void OrderForm::displayItem(int row,int column)
     ui->clientAddressLineEdit->setText(ui->tableWidget->item(row, 5)->text());
     ui->productNameLineEdit->setText(ui->tableWidget->item(row, 6)->text());
     ui->productPriceLineEdit->setText(ui->tableWidget->item(row, 7)->text());
-    ui->quantityLineEdit->setText(ui->tableWidget->item(row, 8)->text());
+    ui->quantitySpinBox->setValue(ui->tableWidget->item(row, 8)->text().toInt());
     ui->amountLineEdit->setText(ui->tableWidget->item(row, 9)->text());
 }
 
@@ -131,12 +131,13 @@ void OrderForm::on_addPushButton_clicked()
     QTableWidgetItem* productNameItem = new QTableWidgetItem(productName);
     QTableWidgetItem* productPriceItem = new QTableWidgetItem(productPrice);
 
-    QTableWidgetItem* orderQuantityItem = new QTableWidgetItem(ui->quantityLineEdit->text());
-    quint32 amount = productPrice.toUInt() * ui->quantityLineEdit->text().toUInt();
+    QTableWidgetItem* orderQuantityItem = new QTableWidgetItem(ui->quantitySpinBox->text());
+    quint32 amount = productPrice.toUInt() * ui->quantitySpinBox->text().toUInt();
     QTableWidgetItem* orderAmountItem = new QTableWidgetItem(QString::number(amount));
 
     int tableRowCount = ui->tableWidget->rowCount();
     ui->tableWidget->setRowCount( tableRowCount + 1);
+
     ui->tableWidget->setItem(tableRowCount, 0, orderIdItem);
     ui->tableWidget->setItem(tableRowCount, 1, clientIdItem);
     ui->tableWidget->setItem(tableRowCount, 2, productIdItem);
@@ -162,8 +163,8 @@ void OrderForm::on_modifyPushButton_clicked()
     QTableWidgetItem* productName = new QTableWidgetItem(ui->productNameLineEdit->text());
     QTableWidgetItem* productPrice = new QTableWidgetItem(ui->productPriceLineEdit->text());
 
-    QTableWidgetItem* orderQuantity = new QTableWidgetItem(ui->quantityLineEdit->text());
-    quint32 amount = ui->productPriceLineEdit->text().toUInt() * ui->quantityLineEdit->text().toUInt();
+    QTableWidgetItem* orderQuantity = new QTableWidgetItem(ui->quantitySpinBox->text());
+    quint32 amount = ui->productPriceLineEdit->text().toUInt() * ui->quantitySpinBox->text().toUInt();
     //    QTableWidgetItem* orderAmount = new QTableWidgetItem(ui->amountLineEdit->text());
     QTableWidgetItem* orderAmount = new QTableWidgetItem(QString::number(amount));
 
@@ -215,9 +216,4 @@ void OrderForm::addProductResult(QList<QString> result)
     ui->productNameLineEdit->setText(result.at(1));
     ui->productPriceLineEdit->setText(result.at(2));
 
-}
-
-void OrderForm::returnId(int id)
-{
-    emit returnDialog(id);
 }

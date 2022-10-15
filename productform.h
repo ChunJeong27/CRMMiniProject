@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+class QTableWidgetItem;
+
 namespace Ui {
 class ProductForm;
 }
@@ -14,16 +16,19 @@ class ProductForm : public QWidget
 public:
     explicit ProductForm(QWidget *parent = nullptr);
     ~ProductForm();
+
     void loadData();
 
+private:
+    QList<QTableWidgetItem*> searchingList;
+
 signals:
-    void productSearchingResult(QList<QString>);
+    void returnSearching(QList<QString>);
 
 public slots:
     int makeId();
     void displayItem(int,int);
-    void searchProductId(QString);
-    void searchProductName(QString);
+    void searching(int, QString);
 
 private slots:
     void on_addPushButton_clicked();
@@ -33,6 +38,10 @@ private slots:
     void on_modifyPushButton_clicked();
 
     void on_removePushButton_clicked();
+
+    void on_clearPushButton_clicked();
+
+    void on_idLineEdit_returnPressed();
 
 private:
     Ui::ProductForm *ui;
