@@ -23,6 +23,7 @@ private:
 private slots:
     void echoData();
     void sendData();
+    void enterRoom();
 
 private:
     QTcpSocket *clientSocket;

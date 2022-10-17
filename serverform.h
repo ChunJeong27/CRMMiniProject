@@ -2,6 +2,7 @@
 #define SERVERFORM_H
 
 #include <QWidget>
+#include <QList>
 
 class QTcpServer;
 class QTcpSocket;

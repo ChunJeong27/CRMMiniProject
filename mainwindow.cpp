@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(orderForm, "Order Manager");
     serverForm = new ServerForm;
     ui->tabWidget->addTab(serverForm, "Chatting Server");
+//    serverForm->show();
 
     chattingForm = new ChattingForm;
     ui->dockWidget->setWidget(chattingForm);

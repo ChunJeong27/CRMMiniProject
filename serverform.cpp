@@ -1,9 +1,10 @@
 #include "serverform.h"
 #include "ui_serverform.h"
-#include <QMessageBox>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QApplication>
+#include <QMessageBox>
+#include <QDateTime>
 
 #define BLOCK_SIZE  1024
 
@@ -36,28 +37,40 @@ ServerForm::~ServerForm()
 void ServerForm::clientConnect()
 {
     QTcpSocket *clientConnection = tcpServer->nextPendingConnection();
+
     connect(clientConnection, SIGNAL(readyRead()), SLOT(echoData()));
     connect(clientConnection, SIGNAL(disconnected()), SLOT(removeItem()));
-    ui->textEdit->append("new connection is established...");
+
+    QString ip = clientConnection->peerAddress().toString();
+    quint16 port = clientConnection->peerPort();
+
+    QListWidgetItem* clientItem = new QListWidgetItem(ip);
+    ui->clientListWidget->addItem(clientItem);
+
+    ui->textEdit->append("new connection " + ip + " is established... Port : " + QString::number(port));
+    ui->textEdit->append(QDateTime::currentDateTime().toString());
 
     clientList.append(clientConnection);
 }
 
 void ServerForm::echoData()
 {
-    QTcpSocket *clientConnection = qobject_cast<QTcpSocket*>(sender());
+    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket*>(sender());
 
     QByteArray bytearray = clientConnection->read(BLOCK_SIZE);
-    Q_FOREACH(QTcpSocket* sock, clientList){
-        if(sock != clientConnection)
+    QString ip;
+    foreach(QTcpSocket* sock, clientList){
+        if(sock != clientConnection){
+//            ip = sock->peerAddress().toString().toUtf8();
             sock->write(bytearray);
+        }
     }
     ui->textEdit->append(QString(bytearray));
 }
 
 void ServerForm::removeItem()
 {
-    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket *>(sender( ));
+    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket *>(sender());
     clientList.removeOne(clientConnection);
     clientConnection->deleteLater();
 }
