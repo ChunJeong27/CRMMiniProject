@@ -38,6 +38,26 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>IP</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="ipLineEdit"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="portLineEdit">
+       <property name="maximumSize">
+        <size>
+         <width>50</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>Name</string>
@@ -48,9 +68,15 @@
       <widget class="QLineEdit" name="nameLineEdit"/>
      </item>
      <item>
-      <widget class="QPushButton" name="enterPushButton">
+      <widget class="QPushButton" name="statusPushButton">
+       <property name="maximumSize">
+        <size>
+         <width>70</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Enter</string>
+        <string>Connect</string>
        </property>
       </widget>
      </item>

@@ -17,7 +17,7 @@ ServerForm::ServerForm(QWidget *parent) :
     connect(ui->quitPushButton, SIGNAL(clicked()), qApp, SLOT(quit()));
 
     tcpServer = new QTcpServer(this);
-    connect(tcpServer, SIGNAL(newConnection()), SLOT(clientConnect()));
+    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(clientConnect()));
     if(!tcpServer->listen(QHostAddress::Any, 19000)){
         QMessageBox::critical(this, tr("Echo Server"),
                               tr("Unable to start the server: %1.")
@@ -51,21 +51,42 @@ void ServerForm::clientConnect()
     ui->textEdit->append(QDateTime::currentDateTime().toString());
 
     clientList.append(clientConnection);
+
 }
 
 void ServerForm::echoData()
 {
-    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket*>(sender());
+    qDebug("Server echoData");
+    QTcpSocket *clientConnection = qobject_cast<QTcpSocket*>(sender());
 
     QByteArray bytearray = clientConnection->read(BLOCK_SIZE);
-    QString ip;
-    foreach(QTcpSocket* sock, clientList){
-        if(sock != clientConnection){
-//            ip = sock->peerAddress().toString().toUtf8();
-            sock->write(bytearray);
+    char type = bytearray.at(0);
+    bytearray.remove(0, 1);
+
+    QListWidgetItem* listWidgetItem = ui->clientListWidget->item(0);
+    QString ipText;
+
+    switch(type){
+    case Chat_Login:
+        ipText = "(" + listWidgetItem->text() + ")";
+        listWidgetItem->setText(bytearray.toStdString().data() + ipText);
+
+        clientConnection->write(&type);
+        break;
+
+    case Chat_In:
+        ui->textEdit->append(QString(bytearray));
+        break;
+
+    case Chat_Talk:
+        foreach(QTcpSocket* sock, clientList){
+            if(sock != clientConnection){
+                sock->write(bytearray);
+            }
         }
+        ui->textEdit->append(QString(bytearray));
+        break;
     }
-    ui->textEdit->append(QString(bytearray));
 }
 
 void ServerForm::removeItem()
@@ -73,4 +94,9 @@ void ServerForm::removeItem()
     QTcpSocket *clientConnection = dynamic_cast<QTcpSocket *>(sender());
     clientList.removeOne(clientConnection);
     clientConnection->deleteLater();
+}
+
+void ServerForm::banishClient()
+{
+
 }
