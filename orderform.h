@@ -33,8 +33,8 @@ private:
 signals:
     void clientReturnPressed(QString);
     void productReturnPressed(QString);
-    void searchClientId(QString);
-    void searchProductId(QString);
+    void searchedClient(int, QString);
+    void searchedProduct(int, QString);
     void clientSearching(QString);
 
     void returnDialog(int);

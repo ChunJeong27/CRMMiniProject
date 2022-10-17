@@ -28,6 +28,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->dockWidget->setWidget(chattingForm);
     ui->dockWidget->setFloating(true);
 
+    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
+    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
+    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
+    connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
+
     connect(orderForm, SIGNAL(clickedSearchButton()), this, SLOT(createSeachingDialog()));
 
     connect(ui->action_Client_Manager, SIGNAL(triggered()), this, SLOT(clientTabAction()));
@@ -70,7 +75,8 @@ void MainWindow::createSeachingDialog()
     connect(searchingDialog, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
     connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayRow(QList<QString>)));
 
-    connect(searchingDialog, SIGNAL(returnOrderForm(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
+    connect(searchingDialog, SIGNAL(returnClient(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
+    connect(searchingDialog, SIGNAL(returnProduct(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
 
     searchingDialog->open();
 }

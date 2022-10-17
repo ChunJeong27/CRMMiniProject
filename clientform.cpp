@@ -207,7 +207,7 @@ void ClientForm::searching(int type, QString content)
     if(searchingResult.empty())     return;
 
     QList<QString> returnResult;
-    Q_FOREACH( QTableWidgetItem* item, searchingResult ){
+    foreach( QTableWidgetItem* item, searchingResult ){
         if( item->column() == type ){
             int searchingRow = item->row();
             returnResult << ui->tableWidget->item(searchingRow, 0)->text()

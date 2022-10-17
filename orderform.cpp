@@ -61,10 +61,9 @@ void OrderForm::loadData()
             QTableWidgetItem* productIdItem = new QTableWidgetItem(row.at(2));
             QTableWidgetItem* orderQuantityItem = new QTableWidgetItem(row.at(3));
 
-            emit searchClientId(row.at(1));
-            emit searchProductId(row.at(2));
+            emit searchedClient(0, row.at(1));
+            emit searchedProduct(0, row.at(2));
 
-            qDebug() << clientName;
             QTableWidgetItem* clientNameItem = new QTableWidgetItem(clientName);
             QTableWidgetItem* clientPhoneNumItem = new QTableWidgetItem(clientPhoneNum);
             QTableWidgetItem* clientAddressItem = new QTableWidgetItem(clientAddress);

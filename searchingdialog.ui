@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
-    <height>450</height>
+    <width>480</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -92,6 +92,9 @@
    </item>
    <item>
     <widget class="QTableWidget" name="productTableWidget">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
      <column>
       <property name="text">
        <string>ID</string>

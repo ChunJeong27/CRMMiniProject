@@ -21,7 +21,8 @@ protected:
 signals:
     void searchedClient(int, QString);
     void searchedProduct(int, QString);
-    void returnOrderForm(QList<QString>);
+    void returnClient(QList<QString>);
+    void returnProduct(QList<QString>);
 
 public slots:
     void displayRow(QList<QString>);

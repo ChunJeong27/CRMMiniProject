@@ -18,6 +18,7 @@ SearchingDialog::SearchingDialog(QWidget *parent) :
     ui->productComboBox->addItem("Stock");
 
     connect(ui->clientTableWidget, SIGNAL(cellDoubleClicked(int,int)), this, SLOT(returnSearching(int,int)));
+    connect(ui->productTableWidget, SIGNAL(cellDoubleClicked(int,int)), this, SLOT(returnSearching(int,int)));
 
 }
 
@@ -95,13 +96,20 @@ void SearchingDialog::returnSearching(int row, int column)
 {
     Q_UNUSED(column);
 
+    QTableWidget* tableWidget = qobject_cast<QTableWidget*>(sender());
+
     QList<QString> result;
-    result << ui->clientTableWidget->item(row, 0)->text()
-           << ui->clientTableWidget->item(row, 1)->text()
-           << ui->clientTableWidget->item(row, 2)->text()
-           << ui->clientTableWidget->item(row, 3)->text();
+    result << tableWidget->item(row, 0)->text()
+           << tableWidget->item(row, 1)->text()
+           << tableWidget->item(row, 2)->text()
+           << tableWidget->item(row, 3)->text();
 
-    emit returnOrderForm(result);
+    QString objectName = tableWidget->objectName();
 
+    if("clientTableWidget" == objectName)
+        emit returnClient(result);
+    else if("productTableWidget" == objectName){
+        emit returnProduct(result);
+    }
 }
 
