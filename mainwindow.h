@@ -41,6 +41,9 @@ public slots:
     void productTabAction();
     void orderTabAction();
 
+private slots:
+    void on_action_Chatting_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

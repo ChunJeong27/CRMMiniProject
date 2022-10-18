@@ -4,6 +4,8 @@
 #include <QLocale>
 #include <QTranslator>
 
+#include "chattingform.h"
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -19,6 +21,9 @@ int main(int argc, char *argv[])
     }
     MainWindow w;
     w.show();
+
+//    ChattingForm c;
+//    c.show();
 
     return a.exec();
 }

@@ -40,11 +40,13 @@ private slots:
     void echoData();
     void removeItem();
     void banishClient();
+    void inviteClient();
 
 private:
     QTcpServer *tcpServer;
 
     QList<QTcpSocket*> clientList;
+    QHash<QString, QByteArray> clientName;
 };
 
 #endif // SERVERFORM_H

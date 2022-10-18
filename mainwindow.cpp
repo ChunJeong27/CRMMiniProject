@@ -22,11 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(orderForm, "Order Manager");
     serverForm = new ServerForm;
     ui->tabWidget->addTab(serverForm, "Chatting Server");
-//    serverForm->show();
 
-    chattingForm = new ChattingForm;
-    ui->dockWidget->setWidget(chattingForm);
-    ui->dockWidget->setFloating(true);
+//    chattingForm = new ChattingForm;
+//    ui->dockWidget->setWidget(chattingForm);
+//    ui->dockWidget->setFloating(true);
 
     connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
@@ -80,3 +79,10 @@ void MainWindow::createSeachingDialog()
 
     searchingDialog->open();
 }
+
+void MainWindow::on_action_Chatting_triggered()
+{
+    ChattingForm* chattingForm = new ChattingForm;
+    chattingForm->show();
+}
+

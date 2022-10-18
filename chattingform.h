@@ -23,7 +23,6 @@ private:
 private slots:
     void echoData();
     void sendData();
-    void enterRoom();
     void connectPushButton();
 
 private:

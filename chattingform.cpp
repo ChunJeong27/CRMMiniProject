@@ -15,8 +15,10 @@ ChattingForm::ChattingForm(QWidget *parent) :
     ui->ipLineEdit->setText("127.0.0.1");
     ui->portLineEdit->setText("19000");
 
+    ui->messageLineEdit->setEnabled(false);
+    ui->sentPushButton->setEnabled(false);
+
     connect(ui->statusPushButton, SIGNAL(clicked()), this, SLOT(connectPushButton()));
-    connect(ui->nameLineEdit, SIGNAL(returnPressed()), this, SLOT(connectPushButton()));
     connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendData()));
     connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendData()));
 
@@ -37,6 +39,7 @@ ChattingForm::~ChattingForm()
 
 void ChattingForm::connectPushButton()
 {
+    QString name = ui->nameLineEdit->text();
     QString buttonText = ui->statusPushButton->text();
     QByteArray bytearray;
     if( "Connect" == buttonText ) {
@@ -53,11 +56,14 @@ void ChattingForm::connectPushButton()
         }
     } else if( "Chat In" == buttonText ) {
         char type = Chat_In;
-        QString msg("Enter the Chat Room");
+        QString msg(name);
         bytearray = type + msg.toUtf8();
         clientSocket->write(bytearray);
 
         ui->statusPushButton->setDisabled(true);
+        ui->messageLineEdit->setEnabled(true);
+        ui->sentPushButton->setEnabled(true);
+        ui->chattingTextEdit->append("Enter the chat room");
     }
 
 }
@@ -70,10 +76,27 @@ void ChattingForm::echoData()
 
     QByteArray bytearray = clientSocket->read(BLOCK_SIZE);
     char type = bytearray.at(0);
-qDebug() << type;
 
-    if(type != Chat_Login)
-        ui->messageTextEdit->append(QString(bytearray));
+
+    switch(type){
+    case Chat_Talk:
+        ui->chattingTextEdit->append(QString(bytearray));
+        break;
+
+    case Chat_KickOut:
+        ui->statusPushButton->setDisabled(false);
+        ui->messageLineEdit->setEnabled(false);
+        ui->sentPushButton->setEnabled(false);
+        ui->chattingTextEdit->append("Terminated in chat rooms from the server.");
+        break;
+
+    case Chat_Invite:
+        ui->statusPushButton->setDisabled(true);
+        ui->messageLineEdit->setEnabled(true);
+        ui->sentPushButton->setEnabled(true);
+        ui->chattingTextEdit->append("Invited to chat room by server.");
+        break;
+    }
 }
 
 void ChattingForm::sendData()
@@ -86,19 +109,8 @@ void ChattingForm::sendData()
         QByteArray bytearray;
         bytearray = type + str.toUtf8();
         clientSocket->write(bytearray);
+
+        ui->chattingTextEdit->append("Me : " + str);
     }
-    ui->messageTextEdit->append("Me : " + str);
+
 }
-
-void ChattingForm::enterRoom()
-{
-//    QString str = ui->nameLineEdit->text();
-//    char type = Chat_In;
-
-//    if(str.length()){
-//        QByteArray bytearray = type + str.toUtf8();
-//        clientSocket->write(bytearray);
-//    }
-}
-
-
