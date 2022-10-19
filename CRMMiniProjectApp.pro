@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     chattingform.cpp \
     clientform.cpp \
+    fileserverform.cpp \
     main.cpp \
     mainwindow.cpp \
     orderform.cpp \
@@ -21,6 +22,7 @@ SOURCES += \
 HEADERS += \
     chattingform.h \
     clientform.h \
+    fileserverform.h \
     mainwindow.h \
     orderform.h \
     productform.h \
@@ -30,6 +32,7 @@ HEADERS += \
 FORMS += \
     chattingform.ui \
     clientform.ui \
+    fileserverform.ui \
     mainwindow.ui \
     orderform.ui \
     productform.ui \

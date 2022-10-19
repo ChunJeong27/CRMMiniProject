@@ -7,6 +7,7 @@
 #include "searchingdialog.h"
 #include "serverform.h"
 #include "chattingform.h"
+#include "fileserverform.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -43,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     orderForm->loadData();
 
+    FileServerForm* fileserver = new FileServerForm;
+    fileserver->show();
 }
 
 MainWindow::~MainWindow()

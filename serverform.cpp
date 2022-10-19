@@ -20,6 +20,7 @@ ServerForm::ServerForm(QWidget *parent) :
 
     tcpServer = new QTcpServer(this);
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(clientConnect()));
+
     if(!tcpServer->listen(QHostAddress::Any, 19000)){
         QMessageBox::critical(this, tr("Echo Server"),
                               tr("Unable to start the server: %1.")
@@ -27,8 +28,7 @@ ServerForm::ServerForm(QWidget *parent) :
         close();
         return;
     }
-
-//    ui->textEdit->append(tr("The server is running on port %1.").arg(tcpServer->serverPort()));
+    ui->portNumLineEdit->setText("Port : " + QString::number(tcpServer->serverPort()));
     qDebug()<<tr("The server is running on port %1.").arg(tcpServer->serverPort());
 }
 
@@ -47,11 +47,8 @@ void ServerForm::clientConnect()
     QString ip = clientConnection->peerAddress().toString();
     quint16 port = clientConnection->peerPort();
 
-    QListWidgetItem* clientItem = new QListWidgetItem(ip + "::" +QString::number(port));
+    QListWidgetItem* clientItem = new QListWidgetItem(ip + ":" +QString::number(port));
     ui->clientListWidget->addItem(clientItem);
-
-//    ui->textEdit->append("new connection " + ip + " is established... Port : " + QString::number(port));
-//    ui->textEdit->append(QDateTime::currentDateTime().toString());
 
     clientList.append(clientConnection);
 
@@ -59,56 +56,56 @@ void ServerForm::clientConnect()
 
 void ServerForm::echoData()
 {
-    qDebug("Server echoData");
     QTcpSocket *clientConnection = qobject_cast<QTcpSocket*>(sender());
-
-    QByteArray bytearray = clientConnection->read(BLOCK_SIZE);
-    char type = bytearray.at(0);
-    bytearray.remove(0, 1);
+    // 슬롯을 호출한 시그널의 객체를 가져옴
+    QByteArray byteArray = clientConnection->read(BLOCK_SIZE);
+    // 소켓으로부터 서버에서 전송한 데이터
+    char type = byteArray.at(0);    // 받은 데이터의 첫 1바이트는 서버에서 수행할 동작을 의미
+    QString data = byteArray.remove(0, 1);         // 동작 바이트를 제거 및 문자열로 저장
 
     QString ip = clientConnection->peerAddress().toString();
     quint16 port = clientConnection->peerPort();
-    QString listName = ip + "::" + QString::number(port);
+    QString listName = ip + ":" + QString::number(port);
 
     switch(type){
     case Chat_Login:
     {
         QList<QListWidgetItem*> result = ui->clientListWidget->findItems(listName, Qt::MatchExactly);
-        clientName.insert(ip, bytearray);
+        clientName.insert(listName, data);    // 이름을 QList에 저장
 
         if(result.isEmpty())
             clientConnection->write("Error");
         else {
             QListWidgetItem* listWidgetItem = result.first();
-            listWidgetItem->setText(bytearray.toStdString().data());
+            listWidgetItem->setText(data);
 
-            clientConnection->write(&type);
-            bytearray = "ENROLL " + bytearray;
-
+//            clientConnection->write(&type);   // 불필요한 코드
+            data = "ENROLL " + data;
         }
-
-    }
-        break;
+    } break;
 
     case Chat_In:
     {
         foreach(QTcpSocket* sock, clientList){
-            sock->write(bytearray + " enter the Chat Room");
+            if(clientConnection != sock)
+                sock->write(type + clientName[listName].toUtf8() + " enter the Chat room");
         }
-        bytearray = "ENTER " + bytearray;
 
-//        ui->textEdit->append(QString(bytearray) + " enter the Chat Room");
-    }
-        break;
+        QByteArray nameListByteArray;
+        QList nameList = ui->clientListWidget->findItems("", Qt::MatchContains);
+        foreach(QListWidgetItem* item, nameList)
+            nameListByteArray += item->text().toUtf8();     // 채팅방 참여자 출력 기능 보류
+
+        data = "ENTER " + data;
+    } break;
 
     case Chat_Talk:
         foreach(QTcpSocket* sock, clientList){
             if(sock != clientConnection){
-                sock->write(clientName[ip] + " : " + bytearray);
+                sock->write(type + clientName[listName].toUtf8() + " : " + byteArray);
             }
         }
-        bytearray = "MESSAGE " + bytearray;
-//        ui->textEdit->append(QString(bytearray));
+        data = "MESSAGE " + data;
         break;
     }
 
@@ -116,8 +113,8 @@ void ServerForm::echoData()
     log->setText(0, QDateTime::currentDateTime().toString());
     log->setText(1, ip);
     log->setText(2, QString::number(port));
-    log->setText(3, clientName[ip]);
-    log->setText(4, bytearray);
+    log->setText(3, clientName[listName]);
+    log->setText(4, data);
 
 }
 

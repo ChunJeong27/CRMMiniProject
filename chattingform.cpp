@@ -76,9 +76,15 @@ void ChattingForm::echoData()
 
     QByteArray bytearray = clientSocket->read(BLOCK_SIZE);
     char type = bytearray.at(0);
+    QString data = bytearray.remove(0, 1);
 
+qDebug("echo Data");
 
     switch(type){
+    case Chat_In:
+        ui->chattingTextEdit->append(QString(bytearray));
+        break;
+
     case Chat_Talk:
         ui->chattingTextEdit->append(QString(bytearray));
         break;

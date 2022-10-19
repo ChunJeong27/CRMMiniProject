@@ -46,7 +46,7 @@ private:
     QTcpServer *tcpServer;
 
     QList<QTcpSocket*> clientList;
-    QHash<QString, QByteArray> clientName;
+    QHash<QString, QString> clientName;     // ip:port, Name
 };
 
 #endif // SERVERFORM_H
