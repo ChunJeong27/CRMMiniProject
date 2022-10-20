@@ -38,8 +38,8 @@ private:
     Ui::ServerForm *ui;
 
 private slots:
-    void clientConnect();
-    void echoData();
+    void ConnectClient();
+    void recieveData();
     void removeItem();
     void banishClient();
     void inviteClient();
@@ -52,6 +52,7 @@ private:
 
     QList<QTcpSocket*> clientList;
     QHash<QString, QString> clientName;     // ip:port, Name
+    QList<QTcpSocket*> waitingClient;  // ip:port, Socket
 
     QTcpServer* ftpServer;
     QTcpSocket* receivedSocket;

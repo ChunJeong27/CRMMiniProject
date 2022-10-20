@@ -21,7 +21,7 @@ ServerForm::ServerForm(QWidget *parent) :
     connect(ui->invitePushButton, SIGNAL(clicked()), this, SLOT(inviteClient()));
 
     tcpServer = new QTcpServer(this);
-    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(clientConnect()));
+    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(ConnectClient()));
 
     if(!tcpServer->listen(QHostAddress::Any, 19000)){
         QMessageBox::critical(this, tr("Echo Server"),
@@ -65,58 +65,87 @@ ServerForm::~ServerForm()
     delete ui;
 }
 
-void ServerForm::clientConnect()
+void ServerForm::ConnectClient()
 {
-    QTcpSocket *clientConnection = tcpServer->nextPendingConnection();
+    QTcpSocket *clientSocket = tcpServer->nextPendingConnection();
 
-    connect(clientConnection, SIGNAL(readyRead()), SLOT(echoData()));
-    connect(clientConnection, SIGNAL(disconnected()), SLOT(removeItem()));
+    connect(clientSocket, SIGNAL(readyRead()), SLOT(recieveData()));
+    connect(clientSocket, SIGNAL(disconnected()), SLOT(removeItem()));
 
-    QString ip = clientConnection->peerAddress().toString();
-    quint16 port = clientConnection->peerPort();
+    QString ip = clientSocket->peerAddress().toString();
+    quint16 port = clientSocket->peerPort();
 
     QListWidgetItem* clientItem = new QListWidgetItem(ip + ":" +QString::number(port));
     ui->clientListWidget->addItem(clientItem);
 
-    clientList.append(clientConnection);
+    clientList.append(clientSocket);
+    waitingClient.append(clientSocket);
+    foreach(auto t, waitingClient){
+        qDebug() << t->peerPort();
+    }
 
+    clientSocket->write(Chat_Login + ip.toUtf8());
 }
 
-void ServerForm::echoData()
+void ServerForm::recieveData()
 {
-    QTcpSocket *clientConnection = qobject_cast<QTcpSocket*>(sender());
+    QTcpSocket* clientSocket = qobject_cast<QTcpSocket*>(sender());
     // 슬롯을 호출한 시그널의 객체를 가져옴
-    QByteArray byteArray = clientConnection->read(BLOCK_SIZE);
+    if(clientSocket == nullptr)     return;
+    QByteArray byteArray = clientSocket->read(BLOCK_SIZE);
     // 소켓으로부터 서버에서 전송한 데이터
-    char type = byteArray.at(0);    // 받은 데이터의 첫 1바이트는 서버에서 수행할 동작을 의미
-    QString data = byteArray.remove(0, 1);         // 동작 바이트를 제거 및 문자열로 저장
+    QString ip = clientSocket->peerAddress().toString();
+    quint16 port = clientSocket->peerPort();
+    QString ipPort = ip + ":" + QString::number(port);
 
-    QString ip = clientConnection->peerAddress().toString();
-    quint16 port = clientConnection->peerPort();
-    QString listName = ip + ":" + QString::number(port);
+    char type = byteArray.at(0);                // 받은 데이터의 첫 1바이트는 서버에서 수행할 동작을 의미
+    QString data = byteArray.remove(0, 1);      // 동작 바이트를 제거 및 문자열로 저장
 
     switch(type){
     case Chat_Login:
     {
-        QList<QListWidgetItem*> result = ui->clientListWidget->findItems(listName, Qt::MatchExactly);
-        clientName.insert(listName, data);    // 이름을 QList에 저장
+        QList<QListWidgetItem*> result = ui->clientListWidget->findItems(ipPort, Qt::MatchExactly);
+        clientName.insert(ipPort, data);    // 이름을 QList에 저장
 
         if(result.isEmpty())
-            clientConnection->write("Error");
+            clientSocket->write(Chat_Talk + "Login Error");
         else {
             QListWidgetItem* listWidgetItem = result.first();
             listWidgetItem->setText(data);
-
-//            clientConnection->write(&type);   // 불필요한 코드
-            data = "ENROLL " + data;
         }
+
+        data = "ENROLL " + data;
     } break;
 
     case Chat_In:
+    case Chat_Invite:
     {
+        if(!waitingClient.isEmpty()){
+            QList<QTcpSocket*>::Iterator eraseSock;
+            for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
+                if(*sock == clientSocket){
+                    eraseSock = sock;
+                }
+            }
+            waitingClient.erase(eraseSock);
+        }
+        foreach(auto t, waitingClient)
+            qDebug() << t->peerPort();
+
+        QByteArray msg = " enter the Chat room.";
+
         foreach(QTcpSocket* sock, clientList){
-            if(clientConnection != sock)
-                sock->write(type + clientName[listName].toUtf8() + " enter the Chat room");
+            if(!waitingClient.isEmpty()){
+                foreach(QTcpSocket* waiting, waitingClient){
+                    if(sock != waiting && sock != clientSocket){
+                        sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
+                    }
+                }
+            } else {
+                if(sock != clientSocket){
+                    sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
+                }
+            }
         }
 
         QByteArray nameListByteArray;
@@ -129,11 +158,26 @@ void ServerForm::echoData()
 
     case Chat_Talk:
         foreach(QTcpSocket* sock, clientList){
-            if(sock != clientConnection){
-                sock->write(type + clientName[listName].toUtf8() + " : " + byteArray);
+            if(!waitingClient.isEmpty()){
+                foreach(QTcpSocket* waiting, waitingClient){
+                    if(sock != waiting && sock != clientSocket){
+                        sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+                    }
+                }
+            } else {
+                if(sock != clientSocket){
+                    sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+                }
             }
         }
         data = "MESSAGE " + data;
+        break;
+
+    case Chat_KickOut:
+    case Chat_Close:
+        waitingClient.append(clientSocket);
+        data = "KICK OUT " + data;
+
         break;
     }
 
@@ -141,7 +185,7 @@ void ServerForm::echoData()
     log->setText(0, QDateTime::currentDateTime().toString());
     log->setText(1, ip);
     log->setText(2, QString::number(port));
-    log->setText(3, clientName[listName]);
+    log->setText(3, clientName[ipPort]);
     log->setText(4, data);
 
 }
@@ -158,19 +202,16 @@ void ServerForm::banishClient()
     QString name = ui->clientListWidget->currentItem()->text();
     QString ipPort = clientName.key(name.toUtf8());
 
-    char chatKickOut = Chat_KickOut;
-    QByteArray bytearray = chatKickOut + name.toUtf8();
-
     foreach(QTcpSocket* socket, clientList){
         if(socket->peerAddress().toString() + ":" + QString::number(socket->peerPort()) == ipPort){
-            socket->write(bytearray);
+            socket->write(Chat_KickOut + name.toUtf8());
 
-            QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
-            log->setText(0, QDateTime::currentDateTime().toString());
-            log->setText(1, socket->peerAddress().toString());
-            log->setText(2, QString::number(socket->peerPort()));
-            log->setText(3, name);
-            log->setText(4, "KICK OUT " + name);
+//            QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+//            log->setText(0, QDateTime::currentDateTime().toString());
+//            log->setText(1, socket->peerAddress().toString());
+//            log->setText(2, QString::number(socket->peerPort()));
+//            log->setText(3, name);
+//            log->setText(4, "KICK OUT " + name);
         }
     }
 }
@@ -180,19 +221,17 @@ void ServerForm::inviteClient()
     QString name = ui->clientListWidget->currentItem()->text();
     QString ipPort = clientName.key(name.toUtf8());
 
-    char chatInvite = Chat_Invite;
-    QByteArray bytearray = chatInvite + name.toUtf8();
-
     foreach(QTcpSocket* socket, clientList){
         if(socket->peerAddress().toString() + ":" + QString::number(socket->peerPort()) == ipPort){
-            socket->write(bytearray);
+            qDebug("invite");
+            socket->write(Chat_Invite + name.toUtf8());
 
-            QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
-            log->setText(0, QDateTime::currentDateTime().toString());
-            log->setText(1, socket->peerAddress().toString());
-            log->setText(2, QString::number(socket->peerPort()));
-            log->setText(3, name);
-            log->setText(4, "INVITE " + name);
+//            QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+//            log->setText(0, QDateTime::currentDateTime().toString());
+//            log->setText(1, socket->peerAddress().toString());
+//            log->setText(2, QString::number(socket->peerPort()));
+//            log->setText(3, name);
+//            log->setText(4, "INVITE " + name);
         }
     }
 }

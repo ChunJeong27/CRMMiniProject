@@ -30,6 +30,8 @@ private slots:
     void sendFile();
 
 private:
+//    void closeEvent(QCloseEvent*) override;
+
     QTcpSocket *clientSocket;
     QTcpSocket *fileClient;
     QProgressDialog* progressDialog;    // 파일 진행 확인
