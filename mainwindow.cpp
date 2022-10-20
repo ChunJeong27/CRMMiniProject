@@ -44,8 +44,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     orderForm->loadData();
 
-    FileServerForm* fileserver = new FileServerForm;
-    fileserver->show();
+//    FileServerForm* fileserver = new FileServerForm;
+//    fileserver->show();
 }
 
 MainWindow::~MainWindow()

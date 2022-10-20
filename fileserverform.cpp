@@ -6,6 +6,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QFileInfo>
+#include <QMessageBox>
 
 FileServerForm::FileServerForm(QWidget *parent) :
     QWidget(parent),
@@ -34,14 +35,22 @@ void FileServerForm::clickButton()
 
     server = new QTcpServer(this);
     connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
-    server->listen(QHostAddress(QHostAddress::Any), 20000);
+    if(!server->listen(QHostAddress(QHostAddress::Any), 19100)){
+        QMessageBox::critical(this, tr("Chatting Server"), \
+                              tr("Unable to start the server: %1.") \
+                              .arg(server->errorString( )));
+        close( );
+        return;
+    }
 
+    qDebug("Start listening ...");
     ui->textEdit->append(tr("Start listenint ..."));
 
 }
 
 void FileServerForm::acceptConnection()
 {
+    qDebug("Connected, preparing to receive files!");
     ui->textEdit->append(tr("Connected, preparing to receive files!"));
 
     receivedSocket = server->nextPendingConnection();
@@ -51,6 +60,7 @@ void FileServerForm::acceptConnection()
 
 void FileServerForm::readClient()
 {
+    qDebug("Receiving file ...");
     ui->textEdit->append(tr("Receiving file ..."));
 
     if(byteReceived == 0) {     // 데이터를 받기 시작할 때 동작, 파일의 정보를 가져옴
@@ -76,6 +86,7 @@ void FileServerForm::readClient()
     progressDialog->setValue(byteReceived);
 
     if(byteReceived == totalSize){
+        qDebug() << QString("%1 receive completed").arg(filename);
         ui->textEdit->setText(tr("%1 receive completed").arg(filename));
 
         inBlock.clear();

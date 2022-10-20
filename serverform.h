@@ -6,6 +6,8 @@
 
 class QTcpServer;
 class QTcpSocket;
+class QFile;
+class QProgressDialog;
 
 namespace Ui {
 class ServerForm;
@@ -42,11 +44,24 @@ private slots:
     void banishClient();
     void inviteClient();
 
+    void acceptConnection();
+    void readClient();
+
 private:
     QTcpServer *tcpServer;
 
     QList<QTcpSocket*> clientList;
     QHash<QString, QString> clientName;     // ip:port, Name
+
+    QTcpServer* ftpServer;
+    QTcpSocket* receivedSocket;
+    QFile* newFile;
+    QProgressDialog* progressDialog;
+
+    QByteArray inBlock;
+    QString filename;
+    qint64 totalSize;
+    qint64 byteReceived;
 };
 
 #endif // SERVERFORM_H

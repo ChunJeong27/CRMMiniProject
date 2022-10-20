@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QFileInfo>
+#include <QProgressDialog>
 
 #define BLOCK_SIZE  1024
 
@@ -28,8 +30,34 @@ ServerForm::ServerForm(QWidget *parent) :
         close();
         return;
     }
+
     ui->portNumLineEdit->setText("Port : " + QString::number(tcpServer->serverPort()));
     qDebug()<<tr("The server is running on port %1.").arg(tcpServer->serverPort());
+
+//    connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(clickButton()));
+
+    ui->textEdit->setText("File Server Start!!!");
+
+    totalSize = 0;
+    byteReceived = 0;
+
+    ftpServer = new QTcpServer(this);
+    connect(ftpServer, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
+    if(!ftpServer->listen(QHostAddress(QHostAddress::Any), 19100)){
+        QMessageBox::critical(this, tr("Chatting Server"), \
+                              tr("Unable to start the server: %1.") \
+                              .arg(ftpServer->errorString( )));
+        close( );
+        return;
+    }
+
+    qDebug("Start listening ...");
+    ui->textEdit->append(tr("Start listenint ..."));
+
+    progressDialog = new QProgressDialog(0);
+    progressDialog->setAutoClose(true);
+    progressDialog->reset();
+
 }
 
 ServerForm::~ServerForm()
@@ -128,18 +156,18 @@ void ServerForm::removeItem()
 void ServerForm::banishClient()
 {
     QString name = ui->clientListWidget->currentItem()->text();
-    QString ip = clientName.key(name.toUtf8());
+    QString ipPort = clientName.key(name.toUtf8());
 
     char chatKickOut = Chat_KickOut;
     QByteArray bytearray = chatKickOut + name.toUtf8();
 
     foreach(QTcpSocket* socket, clientList){
-        if(socket->peerAddress().toString() == ip){
+        if(socket->peerAddress().toString() + ":" + QString::number(socket->peerPort()) == ipPort){
             socket->write(bytearray);
 
             QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
             log->setText(0, QDateTime::currentDateTime().toString());
-            log->setText(1, ip);
+            log->setText(1, socket->peerAddress().toString());
             log->setText(2, QString::number(socket->peerPort()));
             log->setText(3, name);
             log->setText(4, "KICK OUT " + name);
@@ -150,21 +178,74 @@ void ServerForm::banishClient()
 void ServerForm::inviteClient()
 {
     QString name = ui->clientListWidget->currentItem()->text();
-    QString ip = clientName.key(name.toUtf8());
+    QString ipPort = clientName.key(name.toUtf8());
 
     char chatInvite = Chat_Invite;
     QByteArray bytearray = chatInvite + name.toUtf8();
 
     foreach(QTcpSocket* socket, clientList){
-        if(socket->peerAddress().toString() == ip){
+        if(socket->peerAddress().toString() + ":" + QString::number(socket->peerPort()) == ipPort){
             socket->write(bytearray);
 
             QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
             log->setText(0, QDateTime::currentDateTime().toString());
-            log->setText(1, ip);
+            log->setText(1, socket->peerAddress().toString());
             log->setText(2, QString::number(socket->peerPort()));
             log->setText(3, name);
             log->setText(4, "INVITE " + name);
         }
     }
+}
+
+void ServerForm::acceptConnection()
+{
+    qDebug("Connected, preparing to receive files!");
+    ui->textEdit->append(tr("Connected, preparing to receive files!"));
+
+    receivedSocket = ftpServer->nextPendingConnection();
+
+    connect(receivedSocket, SIGNAL(readyRead()), this, SLOT(readClient()));
+}
+
+void ServerForm::readClient()
+{
+    qDebug("Receiving file ...");
+    ui->textEdit->append(tr("Receiving file ..."));
+
+    if(byteReceived == 0) {     // 데이터를 받기 시작할 때 동작, 파일의 정보를 가져옴
+        progressDialog->reset();
+        progressDialog->show();
+
+        QDataStream in(receivedSocket);
+        in >> totalSize >> byteReceived >> filename;
+        progressDialog->setMaximum(totalSize);
+
+        QFileInfo info(filename);
+        QString currentFileName = info.fileName();
+        newFile = new QFile(currentFileName);
+        newFile->open(QFile::WriteOnly);
+    } else {
+        inBlock = receivedSocket->readAll();
+
+        byteReceived += inBlock.size();
+        newFile->write(inBlock);
+        newFile->flush();
+    }
+
+    progressDialog->setValue(byteReceived);
+
+    if(byteReceived == totalSize){
+        qDebug() << QString("%1 receive completed").arg(filename);
+        ui->textEdit->append(tr("%1 receive completed").arg(filename));
+
+        inBlock.clear();
+        byteReceived = 0;
+        totalSize = 0;
+        progressDialog->reset();
+        progressDialog->hide();
+        newFile->close();
+
+        delete newFile;
+    }
+
 }
