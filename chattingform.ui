@@ -28,7 +28,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Chatting</string>
+      <string>Chatting Room</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

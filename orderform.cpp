@@ -200,9 +200,9 @@ void OrderForm::addClientResult(QList<QString> result)
     clientName = result.at(1);
     clientPhoneNum = result.at(2);
     clientAddress = result.at(3);
-    ui->clientNameLineEdit->setText(result.at(1));
-    ui->clientPhoneNumLineEdit->setText(result.at(2));
-    ui->clientAddressLineEdit->setText(result.at(3));
+//    ui->clientNameLineEdit->setText(result.at(1));
+//    ui->clientPhoneNumLineEdit->setText(result.at(2));
+//    ui->clientAddressLineEdit->setText(result.at(3));
 
 }
 
@@ -212,7 +212,7 @@ void OrderForm::addProductResult(QList<QString> result)
     productName = result.at(1);
     productPrice = result.at(2);
     productStock = result.at(3);
-    ui->productNameLineEdit->setText(result.at(1));
-    ui->productPriceLineEdit->setText(result.at(2));
+//    ui->productNameLineEdit->setText(result.at(1));
+//    ui->productPriceLineEdit->setText(result.at(2));
 
 }
