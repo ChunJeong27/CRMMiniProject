@@ -24,6 +24,8 @@ typedef enum {
     Chat_FileTrans_Start,   // 파일 전송 시작(파일명) --> 파일 오픈
     Chat_FileTransfer,      // 파일 데이터 전송      --> 데이터를 파일에 저장
     Chat_FileTrans_End,     // 파일 전송 완료        --> 파일 닫기
+    Chat_List,
+    Chat_FileList,
 } Chat_Status;
 
 class ServerForm : public QWidget
@@ -52,17 +54,22 @@ private:
 
     QList<QTcpSocket*> clientList;
     QHash<QString, QString> clientName;     // ip:port, Name
-    QList<QTcpSocket*> waitingClient;  // ip:port, Socket
+    QList<QTcpSocket*> waitingClient;  // Socket
 
     QTcpServer* ftpServer;
-    QTcpSocket* receivedSocket;
+//    QTcpSocket* receivedSocket;
     QFile* newFile;
     QProgressDialog* progressDialog;
+
+    QList<QTcpSocket*> ftpSocketList;
+    QHash<QString, QString> ipToClientName;
 
     QByteArray inBlock;
     QString filename;
     qint64 totalSize;
     qint64 byteReceived;
+
+    void writeSocket(QTcpSocket*, char, QByteArray);
 };
 
 #endif // SERVERFORM_H

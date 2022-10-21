@@ -110,6 +110,7 @@ void ChattingForm::echoData()
     QByteArray bytearray = clientSocket->read(BLOCK_SIZE);
     QString name = ui->nameLineEdit->text();
     char type = bytearray.at(0);
+    qDebug() << type;
     QString data = bytearray.remove(0, 1);
 
     switch(type){
@@ -118,8 +119,24 @@ void ChattingForm::echoData()
 
         break;
     case Chat_In:
-        ui->chattingTextEdit->append(QString(bytearray));
-        break;
+    {
+        QList<QString> dataList = data.split("/");
+        qDebug() << dataList;
+        ui->chattingTextEdit->append(dataList.takeFirst());
+        ui->clientListWidget->clear();
+
+        int cnt = dataList.takeFirst().toInt();
+        for( int i = 0; i < cnt; i++){
+            QListWidgetItem* nameItem = new QListWidgetItem(dataList.takeFirst());
+            ui->clientListWidget->addItem(nameItem);
+        }
+        cnt = dataList.takeFirst().toInt();
+        for( int i = 0; i < cnt; i++){
+            QListWidgetItem* fileItem = new QListWidgetItem(dataList.takeFirst());
+            ui->listWidget->addItem(fileItem);
+        }
+
+    } break;
 
     case Chat_Talk:
         ui->chattingTextEdit->append(QString(bytearray));
@@ -141,6 +158,11 @@ void ChattingForm::echoData()
         ui->chattingTextEdit->append("Invited to chat room by server.");
 
         clientSocket->write(Chat_Invite + name.toUtf8());
+        break;
+
+    case Chat_FileList:
+        QListWidgetItem* fileItem = new QListWidgetItem(data);
+        ui->listWidget->addItem(fileItem);
         break;
     }
 }

@@ -106,9 +106,11 @@ void ServerForm::recieveData()
     {
         QList<QListWidgetItem*> result = ui->clientListWidget->findItems(ipPort, Qt::MatchExactly);
         clientName.insert(ipPort, data);    // 이름을 QList에 저장
+        ipToClientName.insert(ip, data);
 
         if(result.isEmpty())
-            clientSocket->write(Chat_Talk + "Login Error");
+//            clientSocket->write(Chat_Talk + "Login Error");
+            writeSocket(clientSocket, Chat_Talk, "Login Error");
         else {
             QListWidgetItem* listWidgetItem = result.first();
             listWidgetItem->setText(data);
@@ -132,46 +134,84 @@ void ServerForm::recieveData()
         foreach(auto t, waitingClient)
             qDebug() << t->peerPort();
 
-        QByteArray msg = " enter the Chat room.";
+        QByteArray outByteArray;
+        outByteArray.append(clientName[ipPort].toUtf8() + " enter the Chat room./");
+
+//        foreach(QTcpSocket* sock, clientList){
+//            if(!waitingClient.isEmpty()){
+//                foreach(QTcpSocket* waiting, waitingClient){
+//                    if(sock != waiting && sock != clientSocket){
+////                        sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
+//                        writeSocket(sock, Chat_Talk, outByteArray);
+////                        sock->flush();
+////                        while(sock->waitForBytesWritten());
+//                    }
+//                }
+//            } else {
+//                if(sock != clientSocket){
+////                    sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
+////                    sock->flush();
+////                    while(sock->waitForBytesWritten());
+//                    writeSocket(sock, Chat_Talk, outByteArray);
+
+//                }
+//            }
+//        }
+
+
+
+
+
+        QList nameList = ui->clientListWidget->findItems("", Qt::MatchContains);
+        outByteArray.append(QString::number(nameList.size()).toUtf8() + "/");
+        foreach(QListWidgetItem* item, nameList){
+            outByteArray.append(item->text().toUtf8() + "/");     // 채팅방 참여자 출력 기능 보류
+        }
+        qDebug("write");
+
+        QList fileList = ui->fileListWidget->findItems("", Qt::MatchContains);
+        outByteArray.append(QString::number(fileList.size()).toUtf8() + "/");
+        foreach(QListWidgetItem* item, fileList){
+            outByteArray.append(item->text().toUtf8() + "/");     // 채팅방 참여자 출력 기능 보류
+        }
+        qDebug() << outByteArray;
 
         foreach(QTcpSocket* sock, clientList){
             if(!waitingClient.isEmpty()){
                 foreach(QTcpSocket* waiting, waitingClient){
-                    if(sock != waiting && sock != clientSocket){
-                        sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
+                    if(sock != waiting){
+                        writeSocket(sock, Chat_In, outByteArray);
                     }
                 }
             } else {
-                if(sock != clientSocket){
-                    sock->write(Chat_Talk + clientName[ipPort].toUtf8() + msg);
-                }
+                writeSocket(sock, Chat_In, outByteArray);
             }
         }
-
-        QByteArray nameListByteArray;
-        QList nameList = ui->clientListWidget->findItems("", Qt::MatchContains);
-        foreach(QListWidgetItem* item, nameList)
-            nameListByteArray += item->text().toUtf8();     // 채팅방 참여자 출력 기능 보류
 
         data = "ENTER " + data;
     } break;
 
     case Chat_Talk:
+    {
+        QByteArray outByteArray = clientName[ipPort].toUtf8() + " : " + byteArray;
+
         foreach(QTcpSocket* sock, clientList){
             if(!waitingClient.isEmpty()){
                 foreach(QTcpSocket* waiting, waitingClient){
                     if(sock != waiting && sock != clientSocket){
-                        sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+//                        sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+                        writeSocket(sock, Chat_Talk, outByteArray);
                     }
                 }
             } else {
                 if(sock != clientSocket){
-                    sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+//                    sock->write(type + clientName[ipPort].toUtf8() + " : " + byteArray);
+                    writeSocket(sock, Chat_Talk, outByteArray);
                 }
             }
         }
         data = "MESSAGE " + data;
-        break;
+    } break;
 
     case Chat_KickOut:
     case Chat_Close:
@@ -236,18 +276,36 @@ void ServerForm::inviteClient()
     }
 }
 
+void ServerForm::writeSocket(QTcpSocket* socket, char type, QByteArray message)
+{
+    QByteArray outByteArray;
+    outByteArray.append(type);
+    outByteArray.append(message);
+
+    socket->write(outByteArray);
+    socket->flush();
+    while(socket->waitForBytesWritten());
+}
+
 void ServerForm::acceptConnection()
 {
     qDebug("Connected, preparing to receive files!");
     ui->textEdit->append(tr("Connected, preparing to receive files!"));
 
-    receivedSocket = ftpServer->nextPendingConnection();
+//    receivedSocket = ftpServer->nextPendingConnection();
+    QTcpSocket* ftpSocket = ftpServer->nextPendingConnection();
 
-    connect(receivedSocket, SIGNAL(readyRead()), this, SLOT(readClient()));
+//    connect(receivedSocket, SIGNAL(readyRead()), this, SLOT(readClient()));
+    connect(ftpSocket, SIGNAL(readyRead()), this, SLOT(readClient()));
+    ftpSocketList.append(ftpSocket);
+
 }
 
 void ServerForm::readClient()
 {
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+    QString ip = socket->peerAddress().toString();
+
     qDebug("Receiving file ...");
     ui->textEdit->append(tr("Receiving file ..."));
 
@@ -255,16 +313,25 @@ void ServerForm::readClient()
         progressDialog->reset();
         progressDialog->show();
 
-        QDataStream in(receivedSocket);
+        QDataStream in(socket);     // 소켓 변경
         in >> totalSize >> byteReceived >> filename;
         progressDialog->setMaximum(totalSize);
+
+        QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+        log->setText(0, QDateTime::currentDateTime().toString());
+        log->setText(1, socket->peerAddress().toString());
+        log->setText(2, QString::number(socket->peerPort()));
+        log->setText(3, ipToClientName.value(ip));
+        log->setText(4, "File Start " + filename);
+        log->setToolTip(4, "File Start " + filename);
 
         QFileInfo info(filename);
         QString currentFileName = info.fileName();
         newFile = new QFile(currentFileName);
         newFile->open(QFile::WriteOnly);
+
     } else {
-        inBlock = receivedSocket->readAll();
+        inBlock = socket->readAll();        // 소켓 변경
 
         byteReceived += inBlock.size();
         newFile->write(inBlock);
@@ -276,6 +343,17 @@ void ServerForm::readClient()
     if(byteReceived == totalSize){
         qDebug() << QString("%1 receive completed").arg(filename);
         ui->textEdit->append(tr("%1 receive completed").arg(filename));
+
+        QFileInfo info(filename);
+        QString currentFileName = info.fileName();
+
+        QListWidgetItem* fileItem = new QListWidgetItem(currentFileName, ui->fileListWidget);
+        ui->fileListWidget->addItem(fileItem);
+
+        foreach(QTcpSocket* sock, clientList){
+            if(sock->peerAddress().toString() == ip)
+                sock->write(Chat_FileList + currentFileName.toUtf8());
+        }
 
         inBlock.clear();
         byteReceived = 0;
