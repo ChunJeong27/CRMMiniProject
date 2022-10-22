@@ -24,11 +24,13 @@ private:
 
 signals:
     void returnSearching(QList<QString>);
+    void checkedIdName(bool);
 
 public slots:
     int makeId();
     void displayItem(int,int);
     void searching(int, QString);
+    void checkIdName(QString, QString);
 
 private slots:
     void on_clearPushButton_clicked();

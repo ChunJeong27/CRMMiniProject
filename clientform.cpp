@@ -219,3 +219,17 @@ void ClientForm::searching(int type, QString content)
 
     emit returnSearching(returnResult);
 }
+
+void ClientForm::checkIdName(QString name, QString id){
+    QList<QTableWidgetItem*> searchingResult;
+    searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
+
+    if(searchingResult.empty())     return;
+
+    if(ui->tableWidget->item(searchingResult.first()->row(), 1)->text() == name){
+        emit checkedIdName(true);
+    } else {
+        emit checkedIdName(false);
+    }
+
+}

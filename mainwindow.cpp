@@ -42,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->action_Order_Manager, SIGNAL(triggered()), this, SLOT(orderTabAction()));
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
 
+    connect(serverForm, SIGNAL(checkClientId(QString, QString)), clientForm, SLOT(checkIdName(QString,QString)));
+    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
+
     orderForm->loadData();
 
 //    FileServerForm* fileserver = new FileServerForm;

@@ -6,8 +6,6 @@
 #include <QFileDialog>
 #include <QSettings>
 
-#include "serverform.h"
-
 #define BLOCK_SIZE      1024
 
 ChattingForm::ChattingForm(QWidget *parent) :
@@ -31,7 +29,7 @@ ChattingForm::ChattingForm(QWidget *parent) :
     clientSocket = new QTcpSocket(this);
     connect(clientSocket, &QAbstractSocket::errorOccurred, this,
             [=]{qDebug() << clientSocket->errorString(); });
-    connect(clientSocket, SIGNAL(readyRead()), SLOT(echoData()));
+    connect(clientSocket, SIGNAL(readyRead()), SLOT(receiveData()));
 
 
 
@@ -59,73 +57,73 @@ ChattingForm::~ChattingForm()
     delete ui;
 }
 
-//void ChattingForm::closeEvent(QCloseEvent*)
-//{
+void ChattingForm::closeEvent(QCloseEvent*)
+{
 //    sendProtocol(Chat_LogOut, name->text().toStdString().data());
-//    clientSocket->disconnectFromHost();
-//    if(clientSocket->state() != QAbstractSocket::UnconnectedState)
-//        clientSocket->waitForDisconnected();
-//}
+    clientSocket->write(Chat::Connect + (ui->nameLineEdit->text() + "@"
+                                         + ui->idLineEdit->text()).toUtf8());
+    clientSocket->disconnectFromHost();
+    if(clientSocket->state() != QAbstractSocket::UnconnectedState)
+        clientSocket->waitForDisconnected();
+}
 
 void ChattingForm::connectPushButton()
 {
     QString name = ui->nameLineEdit->text();
     QString buttonText = ui->statusPushButton->text();
-    QByteArray bytearray;
 
-    if( "Log In" == buttonText ) {
-        clientSocket->connectToHost(ui->ipLineEdit->text(), ui->portLineEdit->text().toInt());
-
+    if( "Connect" == buttonText ) {
         if(name.length()){
-//            clientSocket->write(Chat_Login + name.toUtf8());
-            ui->statusPushButton->setText("Chat In");
+            clientSocket->connectToHost(ui->ipLineEdit->text(), ui->portLineEdit->text().toInt());
+            ui->statusPushButton->setText("Enter");
         }
-    } else if( "Chat In" == buttonText ) {
-
-//        ui->statusPushButton->setDisabled(true);
+    } else if( "Enter" == buttonText ) {
         ui->messageLineEdit->setEnabled(true);
         ui->sentPushButton->setEnabled(true);
         ui->chattingTextEdit->append("Enter the chat room");
 
-        clientSocket->write(Chat_In + name.toUtf8());
-        ui->statusPushButton->setText("Chat Out");
-    } else if( "Chat Out" == buttonText){
+        clientSocket->write(Chat::Enter + name.toUtf8());
+        ui->statusPushButton->setText("Leave");
+    } else if( "Leave" == buttonText){
         ui->statusPushButton->setDisabled(false);
         ui->messageLineEdit->setEnabled(false);
         ui->sentPushButton->setEnabled(false);
         ui->chattingTextEdit->append("Chat Room Ended.");
 
-        clientSocket->write(Chat_Close + name.toUtf8());
-        ui->statusPushButton->setText("Chat In");
+        clientSocket->write(Chat::Leave + name.toUtf8());
+        ui->statusPushButton->setText("Enter");
     }
 
 }
 
-void ChattingForm::echoData()
+void ChattingForm::receiveData()
 {
     QTcpSocket *clientSocket = qobject_cast<QTcpSocket *>(sender());
 
     if(clientSocket->bytesAvailable() > BLOCK_SIZE)     return;
 
-    QByteArray bytearray = clientSocket->read(BLOCK_SIZE);
+    QByteArray byteArray = clientSocket->read(BLOCK_SIZE);
+
+    QString id = ui->idLineEdit->text();
     QString name = ui->nameLineEdit->text();
-    char type = bytearray.at(0);
-    qDebug() << type;
-    QString data = bytearray.remove(0, 1);
 
-    switch(type){
-    case Chat_Login:
-        clientSocket->write(Chat_Login + ui->nameLineEdit->text().toUtf8());
+    char header(byteArray.at(0));
+    QString body(byteArray.remove(0, 1));
 
+    switch(header){
+    case Chat::Connect:
+        clientSocket->write(Chat::Connect + name.toUtf8() + "@" + id.toUtf8());
         break;
-    case Chat_In:
+
+    case Chat::Enter:
     {
-        QList<QString> dataList = data.split("/");
+        QList<QString> dataList = body.split("/");
         qDebug() << dataList;
+
         ui->chattingTextEdit->append(dataList.takeFirst());
         ui->clientListWidget->clear();
 
-        int cnt = dataList.takeFirst().toInt();
+        int cnt(dataList.takeFirst().toInt());
         for( int i = 0; i < cnt; i++){
             QListWidgetItem* nameItem = new QListWidgetItem(dataList.takeFirst());
             ui->clientListWidget->addItem(nameItem);
@@ -135,33 +133,45 @@ void ChattingForm::echoData()
             QListWidgetItem* fileItem = new QListWidgetItem(dataList.takeFirst());
             ui->listWidget->addItem(fileItem);
         }
-
     } break;
 
-    case Chat_Talk:
-        ui->chattingTextEdit->append(QString(bytearray));
+    case Chat::Message:
+        ui->chattingTextEdit->append(body);
         break;
 
-    case Chat_KickOut:
+    case Chat::Banish:
         ui->statusPushButton->setDisabled(false);
         ui->messageLineEdit->setEnabled(false);
         ui->sentPushButton->setEnabled(false);
         ui->chattingTextEdit->append("Terminated in chat rooms from the server.");
 
-        clientSocket->write(Chat_KickOut + name.toUtf8());
+        clientSocket->write(Chat::Banish + name.toUtf8());
         break;
 
-    case Chat_Invite:
+    case Chat::Invite:
         ui->statusPushButton->setDisabled(true);
         ui->messageLineEdit->setEnabled(true);
         ui->sentPushButton->setEnabled(true);
         ui->chattingTextEdit->append("Invited to chat room by server.");
 
-        clientSocket->write(Chat_Invite + name.toUtf8());
+        clientSocket->write(Chat::Invite + name.toUtf8());
         break;
 
-    case Chat_FileList:
-        QListWidgetItem* fileItem = new QListWidgetItem(data);
+    case Chat::ClientList:
+    {
+        QList<QString> dataList = body.split("/");
+        qDebug() << dataList;
+
+        ui->clientListWidget->clear();
+        foreach(QString list, dataList){
+            QListWidgetItem* nameItem = new QListWidgetItem(list);
+            ui->clientListWidget->addItem(nameItem);
+        }
+    } break;
+
+    case Chat::FileList:
+        QListWidgetItem* fileItem = new QListWidgetItem(body);
+        ui->listWidget->clear();
         ui->listWidget->addItem(fileItem);
         break;
     }
@@ -170,12 +180,10 @@ void ChattingForm::echoData()
 void ChattingForm::sendData()
 {
     QString message = ui->messageLineEdit->text();
-
     ui->messageLineEdit->clear();
-    if(message.length()){
-        QByteArray bytearray = Chat_Talk + message.toUtf8();
-        clientSocket->write(bytearray);
 
+    if(message.length()){
+        clientSocket->write(Chat::Message + message.toUtf8());
         ui->chattingTextEdit->append("Me : " + message);
     }
 
