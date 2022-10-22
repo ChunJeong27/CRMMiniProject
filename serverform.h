@@ -63,6 +63,7 @@ private:
     bool idCheck;
 
     void writeSocket(QTcpSocket*, char, QByteArray);
+    void disconnectSocket(QTcpSocket*);
 };
 
 #endif // SERVERFORM_H

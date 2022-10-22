@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ChattingForm</class>
- <widget class="QWidget" name="ChattingForm">
+ <class>ChatRoomForm</class>
+ <widget class="QWidget" name="ChatRoomForm">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -28,7 +28,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Chatting Room</string>
+      <string>Chat Room</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

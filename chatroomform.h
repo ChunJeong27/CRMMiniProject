@@ -1,5 +1,5 @@
-#ifndef CHATTINGFORM_H
-#define CHATTINGFORM_H
+#ifndef CHATROOMFORM_H
+#define CHATROOMFORM_H
 
 #include <QWidget>
 
@@ -8,7 +8,7 @@ class QFile;
 class QProgressDialog;
 
 namespace Ui {
-class ChattingForm;
+class ChatRoomForm;
 }
 
 namespace Chat {
@@ -29,20 +29,21 @@ typedef enum {
 
 }
 
-class ChattingForm : public QWidget
+class ChatRoomForm : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ChattingForm(QWidget *parent = nullptr);
-    ~ChattingForm();
+    explicit ChatRoomForm(QWidget *parent = nullptr);
+    ~ChatRoomForm();
 
 private:
-    Ui::ChattingForm *ui;
+    Ui::ChatRoomForm *ui;
 
 private slots:
     void receiveData();
     void sendData();
+    void disconnect();
     void connectPushButton();
     void goOnSend(qint64);
     void sendFile();
@@ -62,4 +63,4 @@ private:
 
 };
 
-#endif // CHATTINGFORM_H
+#endif // CHATROOMFORM_H

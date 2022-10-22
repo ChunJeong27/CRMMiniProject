@@ -1,5 +1,5 @@
-#include "chattingform.h"
-#include "ui_chattingform.h"
+#include "chatroomform.h"
+#include "ui_chatroomform.h"
 #include <QTcpSocket>
 #include <QFile>
 #include <QProgressDialog>
@@ -8,9 +8,9 @@
 
 #define BLOCK_SIZE      1024
 
-ChattingForm::ChattingForm(QWidget *parent) :
+ChatRoomForm::ChatRoomForm(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::ChattingForm)
+    ui(new Ui::ChatRoomForm)
 {
     ui->setupUi(this);
 
@@ -50,14 +50,14 @@ ChattingForm::ChattingForm(QWidget *parent) :
 
 }
 
-ChattingForm::~ChattingForm()
+ChatRoomForm::~ChatRoomForm()
 {
     clientSocket->close();
 
     delete ui;
 }
 
-void ChattingForm::closeEvent(QCloseEvent*)
+void ChatRoomForm::closeEvent(QCloseEvent*)
 {
 //    sendProtocol(Chat_LogOut, name->text().toStdString().data());
     clientSocket->write(Chat::Connect + (ui->nameLineEdit->text() + "@"
@@ -67,7 +67,7 @@ void ChattingForm::closeEvent(QCloseEvent*)
         clientSocket->waitForDisconnected();
 }
 
-void ChattingForm::connectPushButton()
+void ChatRoomForm::connectPushButton()
 {
     QString name = ui->nameLineEdit->text();
     QString buttonText = ui->statusPushButton->text();
@@ -96,7 +96,7 @@ void ChattingForm::connectPushButton()
 
 }
 
-void ChattingForm::receiveData()
+void ChatRoomForm::receiveData()
 {
     QTcpSocket *clientSocket = qobject_cast<QTcpSocket *>(sender());
 
@@ -157,6 +157,10 @@ void ChattingForm::receiveData()
         clientSocket->write(Chat::Invite + name.toUtf8());
         break;
 
+    case Chat::Disconnect:
+        ui->statusPushButton->setText("Connect");
+        break;
+
     case Chat::ClientList:
     {
         QList<QString> dataList = body.split("/");
@@ -177,7 +181,7 @@ void ChattingForm::receiveData()
     }
 }
 
-void ChattingForm::sendData()
+void ChatRoomForm::sendData()
 {
     QString message = ui->messageLineEdit->text();
     ui->messageLineEdit->clear();
@@ -189,7 +193,17 @@ void ChattingForm::sendData()
 
 }
 
-void ChattingForm::goOnSend(qint64 numBytes) // Start sending file content
+void ChatRoomForm::disconnect( )
+{
+//    QMessageBox::critical(this, tr("Chatting Client"), \
+//                          tr("Disconnect from Server"));
+    ui->messageLineEdit->setEnabled(false);
+    ui->nameLineEdit->setReadOnly(false);
+    ui->sentPushButton->setEnabled(false);
+    ui->statusPushButton->setText(tr("Connect"));
+}
+
+void ChatRoomForm::goOnSend(qint64 numBytes) // Start sending file content
 {
     byteToWrite -= numBytes; // Remaining data size
     outBlock = file->read(qMin(byteToWrite, numBytes));
@@ -204,7 +218,7 @@ void ChattingForm::goOnSend(qint64 numBytes) // Start sending file content
     }
 }
 
-void ChattingForm::sendFile() // Open the file and get the file name (including path)
+void ChatRoomForm::sendFile() // Open the file and get the file name (including path)
 {
     loadSize = 0;
     byteToWrite = 0;

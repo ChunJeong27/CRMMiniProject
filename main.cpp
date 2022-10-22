@@ -4,7 +4,7 @@
 #include <QLocale>
 #include <QTranslator>
 
-#include "chattingform.h"
+#include "chatroomform.h"
 
 int main(int argc, char *argv[])
 {

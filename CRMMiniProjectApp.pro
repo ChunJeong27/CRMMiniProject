@@ -9,7 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    chattingform.cpp \
+    chatroomform.cpp \
     clientform.cpp \
     fileserverform.cpp \
     main.cpp \
@@ -20,7 +20,7 @@ SOURCES += \
     serverform.cpp
 
 HEADERS += \
-    chattingform.h \
+    chatroomform.h \
     clientform.h \
     fileserverform.h \
     mainwindow.h \
@@ -30,7 +30,7 @@ HEADERS += \
     serverform.h
 
 FORMS += \
-    chattingform.ui \
+    chatroomform.ui \
     clientform.ui \
     fileserverform.ui \
     mainwindow.ui \

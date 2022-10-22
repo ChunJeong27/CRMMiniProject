@@ -6,7 +6,7 @@
 #include "orderform.h"
 #include "searchingdialog.h"
 #include "serverform.h"
-#include "chattingform.h"
+#include "chatroomform.h"
 #include "fileserverform.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -88,7 +88,7 @@ void MainWindow::createSeachingDialog()
 
 void MainWindow::on_action_Chatting_triggered()
 {
-    ChattingForm* chattingForm = new ChattingForm;
-    chattingForm->show();
+    ChatRoomForm* chatRoomForm = new ChatRoomForm;
+    chatRoomForm->show();
 }
 

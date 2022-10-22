@@ -8,7 +8,7 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-#include "chattingform.h"
+#include "chatroomform.h"
 
 #define BLOCK_SIZE  1024
 
@@ -18,7 +18,6 @@ ServerForm::ServerForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->quitPushButton, SIGNAL(clicked()), qApp, SLOT(quit()));
     connect(ui->banishPushButton, SIGNAL(clicked()),
             this, SLOT(banishClient()));
     connect(ui->invitePushButton, SIGNAL(clicked()),
@@ -111,23 +110,38 @@ void ServerForm::recieveData()
         QList<QString> idName = body.split("@");
         idCheck = false;
         emit checkClientId(idName.at(0), idName.at(1));
-        QList<QListWidgetItem*> result =
-                ui->clientListWidget->findItems(ipPort, Qt::MatchExactly);
-        clientName.insert(ipPort, idName.at(0));    // 이름을 QList에 저장
-        ipToClientName.insert(ip, idName.at(0));
+        if(idCheck){
+            QList<QListWidgetItem*> result =
+                    ui->clientListWidget->findItems(ipPort, Qt::MatchExactly);
+            clientName.insert(ipPort, idName.at(0)
+                              + "(ID:" + idName.at(1) + ")");    // 이름을 QList에 저장
+            ipToClientName.insert(ip, idName.at(0)
+                                  + "(ID:" + idName.at(1) + ")");
 
-        if(result.isEmpty())
-//            clientSocket->write(Chat_Talk + "Login Error");
-            writeSocket(clientSocket, Chat::Message, "Login Error");
-        else {
-            if(idCheck){
-            QListWidgetItem* listWidgetItem(result.first());
-            listWidgetItem->setText(idName.at(0)
-                                    + "(ID:" + idName.at(1) + ")");
+            if(result.isEmpty()){
+
+            } else {
+                if(idCheck){
+                QListWidgetItem* listWidgetItem(result.first());
+                listWidgetItem->setText(idName.at(0)
+                                        + "(ID:" + idName.at(1) + ")");
+                }
             }
+            action = "Connect";
+        } else {
+            disconnect(clientSocket);
+            QList<QListWidgetItem*> findList = ui->clientListWidget->findItems("::ffff:", Qt::MatchStartsWith);
+            if(!findList.isEmpty()){
+                ui->clientListWidget->takeItem(ui->clientListWidget->row(findList.first()));
+            }
+            writeSocket(clientSocket, Chat::Disconnect, ipPort.toUtf8());
+            clientSocket->disconnectFromHost();
         }
 
-        action = "Connect";
+
+
+
+
     } break;
 
     case Chat::Enter:
@@ -228,25 +242,7 @@ void ServerForm::recieveData()
         break;
 
     case Chat::Disconnect:
-        if(!clientList.isEmpty()){
-            QList<QTcpSocket*>::Iterator eraseSock;
-            for(auto sock = clientList.begin(); clientList.end() != sock; sock++){
-                if(*sock == clientSocket){
-                    eraseSock = sock;
-                }
-            }
-            clientList.erase(eraseSock);
-        }
-
-        if(!waitingClient.isEmpty()){
-            QList<QTcpSocket*>::Iterator eraseSock;
-            for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
-                if(*sock == clientSocket){
-                    eraseSock = sock;
-                }
-            }
-            waitingClient.erase(eraseSock);
-        }
+        disconnect(clientSocket);
 
         QList<QListWidgetItem*> findList = ui->clientListWidget->findItems(body, Qt::MatchExactly);
         if(!findList.isEmpty()){
@@ -424,4 +420,26 @@ void ServerForm::readClient()
 
 void ServerForm::isClient(bool chk){
     idCheck = chk;
+}
+
+void ServerForm::disconnectSocket(QTcpSocket* sockect){
+    if(!clientList.isEmpty()){
+        QList<QTcpSocket*>::Iterator eraseSock;
+        for(auto sock = clientList.begin(); clientList.end() != sock; sock++){
+            if(*sock == sockect){
+                eraseSock = sock;
+            }
+        }
+        clientList.erase(eraseSock);
+    }
+
+    if(!waitingClient.isEmpty()){
+        QList<QTcpSocket*>::Iterator eraseSock;
+        for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
+            if(*sock == sockect){
+                eraseSock = sock;
+            }
+        }
+        waitingClient.erase(eraseSock);
+    }
 }
