@@ -92,7 +92,7 @@
          <item>
           <widget class="QLabel" name="label_6">
            <property name="text">
-            <string>Client Searching</string>
+            <string>Client Information</string>
            </property>
           </widget>
          </item>
@@ -171,7 +171,7 @@
          <item>
           <widget class="QLabel" name="label_7">
            <property name="text">
-            <string>Product Searching</string>
+            <string>Product Information</string>
            </property>
           </widget>
          </item>
@@ -272,7 +272,7 @@
        <item>
         <layout class="QGridLayout" name="gridLayout">
          <item row="0" column="0">
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="clearPushButton">
            <property name="text">
             <string>&amp;Clear</string>
            </property>

@@ -3,7 +3,7 @@
 
 #include <QWidget>
 
-class SearchingDialog;
+class QTableWidgetItem;
 
 namespace Ui {
 class OrderForm;
@@ -28,11 +28,9 @@ private:
     QString productName;
     QString productPrice;
     QString productStock;
-    SearchingDialog* dlg;
+    QList<QTableWidgetItem*> searchingList;
 
 signals:
-    void clientReturnPressed(QString);
-    void productReturnPressed(QString);
     void searchedClient(int, QString);
     void searchedProduct(int, QString);
     void clientSearching(QString);
@@ -46,6 +44,7 @@ public slots:
 
     void addClientResult(QList<QString>);
     void addProductResult(QList<QString>);
+    void returnPressedSearching();
 
 
 private slots:
@@ -55,8 +54,9 @@ private slots:
 
     void on_removePushButton_clicked();
 
-    void searchClientName(QString);
-    void searchProductName();
+    void on_clearPushButton_clicked();
+
+    void on_searchPushButton_clicked();
 
 private:
     Ui::OrderForm *ui;

@@ -29,6 +29,7 @@ signals:
 public slots:
     int makeId();
     void displayItem(int,int);
+    void returnPressedSearching();
     void searching(int, QString);
     void checkIdName(QString, QString);
 
@@ -42,8 +43,6 @@ private slots:
     void on_modifyPushButton_clicked();
 
     void on_removePushButton_clicked();
-
-    void on_idLineEdit_returnPressed();
 
 private:
     Ui::ClientForm *ui;
