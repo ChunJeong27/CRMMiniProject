@@ -17,8 +17,8 @@ SearchingDialog::SearchingDialog(QWidget *parent) :
     ui->productComboBox->addItem("Price");
     ui->productComboBox->addItem("Stock");
 
-    connect(ui->clientTableWidget, SIGNAL(cellDoubleClicked(int,int)), this, SLOT(returnSearching(int,int)));
-    connect(ui->productTableWidget, SIGNAL(cellDoubleClicked(int,int)), this, SLOT(returnSearching(int,int)));
+    connect(ui->clientTableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(returnSearching(int,int)));
+    connect(ui->productTableWidget, SIGNAL(cellClicked(int,int)), this, SLOT(returnSearching(int,int)));
 
 }
 

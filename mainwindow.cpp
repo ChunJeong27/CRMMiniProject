@@ -7,7 +7,6 @@
 #include "searchingdialog.h"
 #include "serverform.h"
 #include "chatroomform.h"
-#include "fileserverform.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,23 +16,24 @@ MainWindow::MainWindow(QWidget *parent)
 
     clientForm = new ClientForm;
     ui->tabWidget->addTab(clientForm, "Client Manager");
+
     productForm = new ProductForm;
     ui->tabWidget->addTab(productForm, "Product Manager");
+
     orderForm = new OrderForm;
+    connect(orderForm, SIGNAL(clickedSearchButton()), this, SLOT(createSeachingDialog()));
     ui->tabWidget->addTab(orderForm, "Order Manager");
+
     serverForm = new ServerForm;
     ui->tabWidget->addTab(serverForm, "Chatting Server");
-
-//    chattingForm = new ChattingForm;
-//    ui->dockWidget->setWidget(chattingForm);
-//    ui->dockWidget->setFloating(true);
 
     connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
     connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
     connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
 
-    connect(orderForm, SIGNAL(clickedSearchButton()), this, SLOT(createSeachingDialog()));
+    connect(serverForm, SIGNAL(checkClientId(QString, QString)), clientForm, SLOT(checkIdName(QString,QString)));
+    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
 
     connect(ui->action_Client_Manager, SIGNAL(triggered()), this, SLOT(clientTabAction()));
     connect(this, SIGNAL(triggeredClientAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
@@ -42,13 +42,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->action_Order_Manager, SIGNAL(triggered()), this, SLOT(orderTabAction()));
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
 
-    connect(serverForm, SIGNAL(checkClientId(QString, QString)), clientForm, SLOT(checkIdName(QString,QString)));
-    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
-
     orderForm->loadData();
 
-//    FileServerForm* fileserver = new FileServerForm;
-//    fileserver->show();
 }
 
 MainWindow::~MainWindow()

@@ -12,7 +12,7 @@ ClientForm::ClientForm(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->tableWidget, SIGNAL(cellClicked(int,int)),this,
-            SLOT(displayItem(int,int)));    // 클릭한 셀을 라인에디터에 보여주는 기능
+            SLOT(displayItem(int,int)));    // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
     connect(ui->idLineEdit, SIGNAL(returnPressed()), this,
             SLOT(returnPressedSearching()));    // 아이디에 맞는 줄을 활성화시키는 기능
     // 라인에디터에 따라 맞는 열을 검색하고 활성화시키는 기능
@@ -38,7 +38,7 @@ ClientForm::~ClientForm()
     int tableRowCount = ui->tableWidget->rowCount();
     // 반복횟수를 위해 변수에 행의 개수를 저장
     for (int i = 0; i < tableRowCount; i++) {
-        // 연산자를 통해 쉼표로 데이터를 구분해서 저장, 마지막엔 줄바꿈 문자 삽입
+        // 스트림 연산자를 통해 쉼표로 데이터를 구분해서 저장, 마지막엔 줄바꿈 문자 삽입
         out << ui->tableWidget->item(i, 0)->text() << ","
             << ui->tableWidget->item(i, 1)->text() << ","
             << ui->tableWidget->item(i, 2)->text() << ","
@@ -53,7 +53,6 @@ ClientForm::~ClientForm()
 void ClientForm::loadData()
 {
     QFile file("clientForm.txt");   // 저장된 파일을 읽기위해 열기
-
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;     // 파일을 정상적으로 열지 못했을 경우 함수 종료
 
@@ -115,7 +114,7 @@ void ClientForm::on_clearPushButton_clicked()
     ui->addressLineEdit->clear();
 }
 
-/* 라인에디터의 값들을 테이블위젯의 마지막 행에 추가하는 함수 */
+/* 라인에디터의 값들을 테이블위젯의 마지막 행에 추가하는 슬롯함수 */
 void ClientForm::on_addPushButton_clicked()
 {
     // 라인 에디터의 값들을 문자열 변수에 저장
@@ -138,14 +137,15 @@ void ClientForm::on_addPushButton_clicked()
     }
     else {      // 모든 라인에디터에 정상적으로 값이 있을 경우
         // 생성한 ID값과 라인에디터 값들로 테이블위젯아이템을 생성
-        QTableWidgetItem* idItem = new QTableWidgetItem(QString::number(makeId()));
+        QTableWidgetItem* idItem =
+                new QTableWidgetItem(QString::number(makeId()));
         QTableWidgetItem* nameItem = new QTableWidgetItem(name);
         QTableWidgetItem* phoneNumItem = new QTableWidgetItem(phoneNum);
         QTableWidgetItem* addressItem = new QTableWidgetItem(address);
         // 테이블위젯에 아이템을 추가하기 위해 행의 수를 1증가
         int tableRowCount = ui->tableWidget->rowCount();
         ui->tableWidget->setRowCount( tableRowCount + 1);
-        // 행을 증가시킨 테이블위젯에 각 아이템들을 저
+        // 행을 증가시킨 테이블위젯에 각 아이템들을 저장
         ui->tableWidget->setItem(tableRowCount, 0, idItem);
         ui->tableWidget->setItem(tableRowCount, 1, nameItem);
         ui->tableWidget->setItem(tableRowCount, 2, phoneNumItem);
@@ -153,74 +153,101 @@ void ClientForm::on_addPushButton_clicked()
     }
 }
 
+/* ID를 통해 검색하고 행을 활성화하는 슬롯함수 */
 void ClientForm::on_searchPushButton_clicked()
 {
-    QString searchingText = ui->idLineEdit->text();
-    QList<QTableWidgetItem*> searchingResult;
-    searchingResult = ui->tableWidget->findItems(searchingText, Qt::MatchFixedString);
+    QString searchingText(ui->idLineEdit->text());  // ID값을 문자열로 저장
+    QList<QTableWidgetItem*> searchingResult;       // 검색 결과를 리스트로 저장하기 위한 변수
+    // 정확히 일치하는 검색 결과를 저장
+    searchingResult = ui->tableWidget->findItems(searchingText,
+                                                 Qt::MatchFixedString);
+    if(searchingResult.isEmpty())     return;     // 검색 결과가 없을 경우 함수 종료
 
-    if(searchingResult.empty())     return;
-
-    int searchingRow = searchingResult.first()->row();
-    ui->tableWidget->selectRow(searchingRow);
-    displayItem(searchingRow, 0);
+    int searchingRow = searchingResult.first()->row();  // 행을 활성화하기 위한 행의 값
+    // 라인에디터와 맞는 값을 가져왔는지 확인하기 위한 열의 값
+    int searchingColumn = searchingResult.first()->column();
+    // ID 라인에디터의 열의 값인 0과 검색 결과의 열이 일치할 경우 조건문 수행
+    if ( 0 == searchingColumn ){
+        // ID이므로 검색 결과가 하나이기 때문에 가장 첫 번째 값의 행 값을 사용
+        ui->tableWidget->selectRow(searchingRow);   // 검색된 값의 행을 활성화
+        displayItem(searchingRow, 0);   // 검색된 값을 라인에디터에 출력
+    }
 }
 
+/* 테이블위젯의 값을 변경하는 슬롯함수 */
 void ClientForm::on_modifyPushButton_clicked()
 {
+    // 현재 선택된 행의 값을 변수에 저장
     int tableCurrentRow = ui->tableWidget->currentRow();
-
-    QTableWidgetItem* clientName = new QTableWidgetItem(ui->nameLineEdit->text());
-    QTableWidgetItem* clientPhoneNum = new QTableWidgetItem(ui->phoneNumLineEdit->text());
-    QTableWidgetItem* clientAddress = new QTableWidgetItem(ui->addressLineEdit->text());
-
-    ui->tableWidget->setItem(tableCurrentRow, 1, clientName);
-    ui->tableWidget->setItem(tableCurrentRow, 2, clientPhoneNum);
-    ui->tableWidget->setItem(tableCurrentRow, 3, clientAddress);
+    // 수정할 값을 라인에디터로부터 받아와서 각 아이템으로 생성
+    QTableWidgetItem* clientNameItem =
+            new QTableWidgetItem(ui->nameLineEdit->text());
+    QTableWidgetItem* clientPhoneNumItem =
+            new QTableWidgetItem(ui->phoneNumLineEdit->text());
+    QTableWidgetItem* clientAddressItem =
+            new QTableWidgetItem(ui->addressLineEdit->text());
+    // 활성화된 행에 각 아이템들을 저장
+    ui->tableWidget->setItem(tableCurrentRow, 1, clientNameItem);
+    ui->tableWidget->setItem(tableCurrentRow, 2, clientPhoneNumItem);
+    ui->tableWidget->setItem(tableCurrentRow, 3, clientAddressItem);
 }
 
+/* 테이블위젯의 선택된 행을 삭제하는 슬롯함수 */
 void ClientForm::on_removePushButton_clicked()
 {
-    if(QMessageBox::warning(this, "Client Manager", "Are you sure you want to delete it?",
-                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+    // 삭제에 관한 내용을 다시 한번 확인하기 위해 메시지박스를 출력
+    if(QMessageBox::warning(this, "Client Manager",
+                            "Are you sure you want to delete it?",
+                            QMessageBox::Yes | QMessageBox::No)
+            == QMessageBox::Yes)
+        // Yes를 클릭할 경우 행을 삭제
         ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
+/* 라인에디터에서 returnPressed 시그널을 발생시켰을 때 검색기능을 수행하기 위한 함수 */
 void ClientForm::returnPressedSearching()
 {
+    // 신호를 발생시킨 라인에디터를 변수에 저장
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(sender());
-    if(lineEdit == nullptr)     return;
+    if(lineEdit == nullptr)     return;     // 라인에디터가 존재하지 않을 경우 함수 종료
 
-    int lineEditType(0);
+    int lineEditColumn(0);  // 라인에디터의 값과 대응되는 행을 저장하기 위한 변수
+    // 라인에디터의 값이 저장되는 행을 객체 이름을 통해 조건문으로 처리하여 번호를 저장
     if( lineEdit->objectName() == "nameLineEdit" ){
-        lineEditType = 1;
+        lineEditColumn = 1;
     } else if( lineEdit->objectName() == "phoneNumLineEdit" ){
-        lineEditType = 2;
+        lineEditColumn = 2;
     } else if( lineEdit->objectName() == "addressLineEdit" ){
-        lineEditType = 3;
+        lineEditColumn = 3;
     } else {
-        return;
+        return;     // 해당하지 않을 경우 함수를 종료
     }
 
-    QString searchingText = lineEdit->text();
-    if ( searchingList.empty()
-         || searchingList.first()->text().compare(searchingText, Qt::CaseInsensitive)) {
-        searchingList = ui->tableWidget->findItems(searchingText, Qt::MatchFixedString);
-        if(searchingList.empty())     return;
+    QString searchingText(lineEdit->text());    // 검색할 내용을 라인에디터 값으로부터 가져옴
+    // 이전 검색 리스트가 비어있거나 현재 검색 내용과 일치하지 않다면 다시 리스트를 생성
+    if ( searchingList.isEmpty() || searchingList.first()->text().compare(
+             searchingText, Qt::CaseInsensitive)) {
+        // 새롭게 검색 결과 리스트를 갱신한 후 저장
+        searchingList = ui->tableWidget->findItems(searchingText,
+                                                   Qt::MatchFixedString);
+        if(searchingList.isEmpty())     return;     // 갱신한 검색 결과가 없을 경우 함수 종료
+    }
+    // 검색 결과 리스트의 가장 위의 값을 가져와서 사용, 가져온 값은 리스트에서 제거됨
+    QTableWidgetItem* searchingResult(searchingList.takeFirst());
+    // 리스트에서 가져온 값의 행이 다르다면 다음 값을 가져옴
+    while ( searchingResult->column() != lineEditColumn ) {
+        if(searchingList.isEmpty())     return;     // 검색 결과 리스트가 비어 있으면 함수 종료
+        searchingResult = searchingList.takeFirst();    // 다음 검색 결과를 저장
     }
 
-    QTableWidgetItem* searchingResult = searchingList.takeFirst();
-    while ( searchingResult->column() != lineEditType ) {
-        if(searchingList.empty())     return;
-        searchingResult = searchingList.takeFirst();
-    }
-
-    int searchingRow = searchingResult->row();
+    int searchingRow = searchingResult->row();  // 행을 활성화하기 위한 행의 값
+    // 라인에디터와 맞는 열을 가져왔는지 확인하기 위한 열의 값
     int searchingCoulmn = searchingResult->column();
-    if ( searchingCoulmn == lineEditType )
+    // 라인에디터의 열의 값과 검색 결과의 열의 값이 일치할 경우 조건문 수행
+    if ( searchingCoulmn == lineEditColumn )
     {
-        ui->tableWidget->selectRow(searchingRow);
-        displayItem(searchingRow, 0);
+        ui->tableWidget->selectRow(searchingRow);   // 검색 결과의 행을 활성화
+        displayItem(searchingRow, 0);       // 검색 결과의 값을 라인에디터에 저장
     }
 }
 
