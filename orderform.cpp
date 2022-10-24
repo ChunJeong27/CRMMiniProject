@@ -125,7 +125,7 @@ int OrderForm::makeId()
 {
     int lastColumn = ui->tableWidget->rowCount() - 1;   // 테이블위젯의 마지막 행을 가져옴
 
-    if( lastColumn <= 0 )   // 데이터가 없을 경우 3000번부터 ID를 부여
+    if( lastColumn < 0 )   // 데이터가 없을 경우 3000번부터 ID를 부여
         return 3000;
 
     int creatId = ui->tableWidget->item(lastColumn, 0)->text().toInt() + 1;

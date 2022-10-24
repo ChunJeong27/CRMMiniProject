@@ -60,8 +60,8 @@ ChatRoomForm::~ChatRoomForm()
 void ChatRoomForm::closeEvent(QCloseEvent*)
 {
 //    sendProtocol(Chat_LogOut, name->text().toStdString().data());
-    clientSocket->write(Chat::Connect + (ui->nameLineEdit->text() + "@"
-                                         + ui->idLineEdit->text()).toUtf8());
+    clientSocket->write(Chat::Disconnect + (ui->nameLineEdit->text() + "(ID:"
+                                         + ui->idLineEdit->text()).toUtf8() + ")");
     clientSocket->disconnectFromHost();
     if(clientSocket->state() != QAbstractSocket::UnconnectedState)
         clientSocket->waitForDisconnected();

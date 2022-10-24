@@ -85,7 +85,7 @@ int ClientForm::makeId()
 {
     int lastColumn = ui->tableWidget->rowCount() - 1;   // 마지막 행의 값을 가져옴
 
-    if( lastColumn <= 0 )   // 데이터가 없을 경우 1000번부터 ID를 부여
+    if( lastColumn < 0 )   // 데이터가 없을 경우 1000번부터 ID를 부여
         return 1000;
 
     int creatId = ui->tableWidget->item(lastColumn, 0)->text().toInt() + 1;
@@ -251,37 +251,41 @@ void ClientForm::returnPressedSearching()
     }
 }
 
-void ClientForm::searching(int type, QString content)
+/* 열에 따라 테이블위젯에서 데이터를 검색하는 슬롯 함수*/
+void ClientForm::searching(int coulumn, QString content)
 {
-    QList<QTableWidgetItem*> searchingResult;
+    QList<QTableWidgetItem*> searchingResult;   // 검색결과를 저장하기 위한 리스트 생성
+    // 시그널을 통해 받아온 문자열로 테이블위젯을 검색하고 결과를 리스트에 저장
     searchingResult = ui->tableWidget->findItems(content, Qt::MatchFixedString);
 
-    if(searchingResult.empty())     return;
+    if(searchingResult.empty())     return; // 검색결과가 없을 경우 함수를 종료
 
-    QList<QString> returnResult;
+    QList<QString> returnResult;    // 열에 맞는 검색결과를 반환하기 위한 변수 생성
+    // 각 검색결과의 열을 확인하여 리스트에 저장
     foreach( QTableWidgetItem* item, searchingResult ){
-        if( item->column() == type ){
-            int searchingRow = item->row();
+        if( item->column() == coulumn ){   // 검색결과의 행과 데이터의 행이 일치할 경우
+            int searchingRow = item->row();     // 결과리스트에 저장할 테이블위젯의 행을 저장
+            // 행을 통해 결과리스트에 반환할 테이블위젯 데이터를 저장
             returnResult << ui->tableWidget->item(searchingRow, 0)->text()
                          << ui->tableWidget->item(searchingRow, 1)->text()
                          << ui->tableWidget->item(searchingRow, 2)->text()
                          << ui->tableWidget->item(searchingRow, 3)->text();
         }
     }
-
-    emit returnSearching(returnResult);
+    emit returnSearching(returnResult); // 결과리스트를 시그널을 통해 orderForm으로 전달
 }
 
+/* 시그널로 받아온 이름과 ID를 client tableWidget에 존재하는지 확인하는 슬롯 함수 */
 void ClientForm::checkIdName(QString name, QString id){
-    QList<QTableWidgetItem*> searchingResult;
+    QList<QTableWidgetItem*> searchingResult;   // 검색결과를 저장할 리스트 선언
+    // 테이블위젯에서 ID를 검색하고 리스트에 저장
     searchingResult = ui->tableWidget->findItems(id, Qt::MatchFixedString);
 
-    if(searchingResult.empty())     return;
-
+    if(searchingResult.empty())     return; // 검색결과가 존재하지 않으면 함수를 종료
+    // 검색결과의 행의 이름이 매개변수로 받아온 이름과 일치할 경우 Ture를 시그널로 방출
     if(ui->tableWidget->item(searchingResult.first()->row(), 1)->text() == name){
         emit checkedIdName(true);
     } else {
-        emit checkedIdName(false);
+        emit checkedIdName(false);  // 일치하지 않을 경우 False를 방출
     }
-
 }

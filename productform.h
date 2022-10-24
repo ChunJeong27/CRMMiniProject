@@ -17,6 +17,10 @@ public:
     explicit ProductForm(QWidget *parent = nullptr);
     ~ProductForm();
 
+private:
+    Ui::ProductForm *ui;
+
+public:
     void loadData();
 
 private:
@@ -31,6 +35,8 @@ public slots:
     void searching(int, QString);
 
 private slots:
+    void on_clearPushButton_clicked();
+
     void on_addPushButton_clicked();
 
     void on_searchPushButton_clicked();
@@ -39,12 +45,8 @@ private slots:
 
     void on_removePushButton_clicked();
 
-    void on_clearPushButton_clicked();
-
     void on_idLineEdit_returnPressed();
 
-private:
-    Ui::ProductForm *ui;
 };
 
 #endif // PRODUCTFORM_H

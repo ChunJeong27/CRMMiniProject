@@ -70,13 +70,13 @@ void ProductForm::loadData()
 
 int ProductForm::makeId()
 {
-    int lastColumn = ui->tableWidget->rowCount();
+    int lastColumn = ui->tableWidget->rowCount() - 1;
 
-    if( lastColumn <= 0 )
+    if( lastColumn < 0 )
         return 2000;
 
-    int creatId = ui->tableWidget->item(lastColumn - 1, 0)->text().toInt();
-    return creatId + 1;
+    int creatId = ui->tableWidget->item(lastColumn - 1, 0)->text().toInt() + 1;
+    return creatId;
 }
 
 void ProductForm::displayItem(int row,int column)

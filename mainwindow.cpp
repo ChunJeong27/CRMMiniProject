@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(orderForm, "Order Manager");
 
     serverForm = new ServerForm;
-    ui->tabWidget->addTab(serverForm, "Chatting Server");
+    ui->tabWidget->addTab(serverForm, "Chat Server");
 
     connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
