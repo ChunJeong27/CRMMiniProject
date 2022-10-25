@@ -8,6 +8,7 @@ class QTcpServer;
 class QTcpSocket;
 class QFile;
 class QProgressDialog;
+class QListWidgetItem;
 
 namespace Ui {
 class ServerForm;
@@ -34,36 +35,58 @@ private slots:
     void ConnectClient();
     void recieveData();
     void removeItem();
-    void banishClient();
     void inviteClient();
+    void banishClient();
 
-    void acceptConnection();
+    void acceptUploadConnection();
     void readClient();
 
+    void acceptTransferConnection();
+
+    void sendFile(QListWidgetItem*);
+//    void triggeredFileSend(QListWidgetItem*);
+    void goOnSend(qint64);
+
 private:
+    void writeSocket(QTcpSocket*, char, QByteArray);
+    void disconnectSocket(QTcpSocket*);
+
     QTcpServer *tcpServer;
 
     QList<QTcpSocket*> clientList;
     QHash<QString, QString> clientName;     // ip:port, Name
     QList<QTcpSocket*> waitingClient;  // Socket
 
-    QTcpServer* ftpServer;
-//    QTcpSocket* receivedSocket;
+    QTcpServer* ftpUploadServer;
     QFile* newFile;
     QProgressDialog* progressDialog;
 
-    QList<QTcpSocket*> ftpSocketList;
     QHash<QString, QString> ipToClientName;
 
     QByteArray inBlock;
     QString filename;
-    qint64 totalSize;
-    qint64 byteReceived;
+    qint64 uploadTotalSize;
+    qint64 uploadByteReceived;
 
     bool idCheck;
 
-    void writeSocket(QTcpSocket*, char, QByteArray);
-    void disconnectSocket(QTcpSocket*);
+    QList<QString> fileNameList;
+
+    QTcpServer* ftpTransferServer;
+
+    qint64 transferLoadSize;
+    qint64 transferByteToWrite;
+    qint64 transferTotalSize;
+    QByteArray transferOutBlock;
+
+    QFile* transferFile;
+    bool isTransferSent = false;
+    QTcpSocket* transferFileClient;
+
+    QProgressDialog* transferProgressDialog;
+
+
+
 };
 
 #endif // SERVERFORM_H

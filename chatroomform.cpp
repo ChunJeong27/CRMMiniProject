@@ -20,6 +20,8 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendData()));
     connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendData()));
 
+    connect(ui->listWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SIGNAL(clickedFileList(QListWidgetItem*)));
+
     ui->ipLineEdit->setText("127.0.0.1");
     ui->portLineEdit->setText("19000");
 
@@ -35,8 +37,8 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
 
     connect(clientSocket, SIGNAL(disconnected( )), SLOT(disconnect( )));
 
-    QSettings settings("ChatClient", "Chat Client");
-    ui->nameLineEdit->setText(settings.value("ChatClient/ID").toString());
+//    QSettings settings("ChatClient", "Chat Client");
+//    ui->nameLineEdit->setText(settings.value("ChatClient/ID").toString());
 
     fileClient = new QTcpSocket(this);
     connect(fileClient, SIGNAL(bytesWritten(qint64)), SLOT(goOnSend(qint64)));
@@ -47,6 +49,19 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
 
     connect(ui->uploadPushButton, SIGNAL(clicked( )), SLOT(sendFile( )));
 //    ui->uploadPushButton->setDisabled(true);
+
+    downloadTotalSize = 0;
+    downloadByteReceived = 0;
+
+    downloadFileClient = new QTcpSocket(this);
+//    connect(downloadFileClient, SIGNAL(bytesWritten(qint64)), SLOT(goOnSend(qint64)));
+
+    downloadProgressDialog = new QProgressDialog(0);
+    downloadProgressDialog->setAutoClose(true);
+    downloadProgressDialog->reset();
+
+    downloadFileClient->connectToHost("127.0.0.1", 19200);
+    connect(downloadFileClient, SIGNAL(readyRead()), this, SLOT(downloadFile()));
 
 }
 
@@ -139,23 +154,28 @@ void ChatRoomForm::receiveData()
         ui->chattingTextEdit->append(body);
         break;
 
+    case Chat::Invite:
+    {
+        ui->messageLineEdit->setEnabled(true);
+        ui->sentPushButton->setEnabled(true);
+        ui->statusPushButton->setText("Leave");
+        ui->chattingTextEdit->append("Invited to chat room by server.");
+
+        QByteArray msg = "Invite";
+        clientSocket->write(Chat::Invite + msg);
+    } break;
+
     case Chat::Banish:
+    {
         ui->statusPushButton->setDisabled(false);
         ui->messageLineEdit->setEnabled(false);
         ui->sentPushButton->setEnabled(false);
+        ui->statusPushButton->setText("Enter");
         ui->chattingTextEdit->append("Terminated in chat rooms from the server.");
 
-        clientSocket->write(Chat::Banish + name.toUtf8());
-        break;
-
-    case Chat::Invite:
-        ui->statusPushButton->setDisabled(true);
-        ui->messageLineEdit->setEnabled(true);
-        ui->sentPushButton->setEnabled(true);
-        ui->chattingTextEdit->append("Invited to chat room by server.");
-
-        clientSocket->write(Chat::Invite + name.toUtf8());
-        break;
+        QByteArray msg = "Kick Out";
+        clientSocket->write(Chat::Banish + msg);
+    } break;
 
     case Chat::Disconnect:
         ui->statusPushButton->setText("Connect");
@@ -259,4 +279,71 @@ void ChatRoomForm::sendFile() // Open the file and get the file name (including 
     progressDialog->show();
 
     qDebug() << QString("Sending file %1").arg(filename);
+}
+
+/* 서버에서 파일을 다운로드하기 위한 함수 */
+void ChatRoomForm::downloadFile()   // readClient
+{
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+    QString ip = socket->peerAddress().toString();
+
+    qDebug("Downloading file ...");
+//    ui->textEdit->append(tr("Receiving file ..."));
+
+    if(downloadByteReceived == 0) {     // 데이터를 받기 시작할 때 동작, 파일의 정보를 가져옴
+        progressDialog->reset();
+        progressDialog->show();
+
+        QDataStream in(socket);     // 소켓 변경
+        in >> downloadTotalSize >> downloadByteReceived >> downloadFilename;
+        progressDialog->setMaximum(downloadTotalSize);
+
+//        QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+//        log->setText(0, QDateTime::currentDateTime().toString());
+//        log->setText(1, socket->peerAddress().toString());
+//        log->setText(2, QString::number(socket->peerPort()));
+//        log->setText(3, ipToClientName.value(ip));
+//        log->setText(4, "File Start " + downloadFilename);
+//        log->setToolTip(4, "File Start " + downloadFilename);
+
+        QFileInfo info(downloadFilename);
+        QString currentFileName = info.fileName();
+        downloadNewFile = new QFile(currentFileName);
+        downloadNewFile->open(QFile::WriteOnly);
+
+    } else {
+        downloadInBlock = socket->readAll();        // 소켓 변경
+
+        downloadByteReceived += downloadInBlock.size();
+        downloadNewFile->write(downloadInBlock);
+        downloadNewFile->flush();
+    }
+
+    progressDialog->setValue(downloadByteReceived);
+
+    if(downloadByteReceived == downloadTotalSize){
+//        qDebug() << QString("%1 receive completed").arg(filename);
+//        ui->textEdit->append(tr("%1 receive completed").arg(filename));
+
+        QFileInfo info(downloadFilename);
+//        QString currentFileName = info.fileName();
+
+//        QListWidgetItem* fileItem = new QListWidgetItem(currentFileName, ui->fileListWidget);
+//        ui->fileListWidget->addItem(fileItem);
+
+//        foreach(QTcpSocket* sock, clientList){
+//            if(sock->peerAddress().toString() == ip)
+//                sock->write(Chat::FileList + currentFileName.toUtf8());
+//        }
+
+        downloadInBlock.clear();
+        downloadByteReceived = 0;
+        downloadTotalSize = 0;
+        downloadProgressDialog->reset();
+        downloadProgressDialog->hide();
+        downloadNewFile->close();
+
+        delete downloadNewFile;
+    }
+
 }

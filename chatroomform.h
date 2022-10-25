@@ -6,6 +6,7 @@
 class QTcpSocket;
 class QFile;
 class QProgressDialog;
+class QListWidgetItem;
 
 namespace Ui {
 class ChatRoomForm;
@@ -13,7 +14,7 @@ class ChatRoomForm;
 
 namespace Chat {
 typedef enum {
-    Connect = 0x30,             // 로그인(서버 접속)   --> 초대를 위한 정보 저장
+    Connect = 0x30,       // 로그인(서버 접속)   --> 초대를 위한 정보 저장
     Enter,                // 채팅방 입장
     Message,              // 채팅
     Leave,             // 채팅방 퇴장         --> 초대 가능
@@ -40,6 +41,9 @@ public:
 private:
     Ui::ChatRoomForm *ui;
 
+signals:
+    void clickedFileList(QListWidgetItem*);
+
 private slots:
     void receiveData();
     void sendData();
@@ -47,6 +51,8 @@ private slots:
     void connectPushButton();
     void goOnSend(qint64);
     void sendFile();
+
+    void downloadFile();
 
 private:
     void closeEvent(QCloseEvent*) override;
@@ -60,6 +66,14 @@ private:
     qint64 totalSize;
     QByteArray outBlock;
     bool isSent = false;
+
+    QTcpSocket* downloadFileClient;
+    QProgressDialog* downloadProgressDialog;
+    qint64 downloadTotalSize;
+    qint64 downloadByteReceived = 0;
+    QString downloadFilename;
+    QFile* downloadNewFile;
+    QByteArray downloadInBlock;
 
 };
 

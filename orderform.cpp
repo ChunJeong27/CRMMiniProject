@@ -165,6 +165,11 @@ void OrderForm::on_clearPushButton_clicked()
 /* 라인에디터의 값들을 데이블위젯에 마지막 행에 추가하는 슬롯 함수 */
 void OrderForm::on_addPushButton_clicked()
 {
+    if( ui->quantitySpinBox->text().toUInt() > productStock.toUInt()){
+        QMessageBox::critical(this, "Order Manager",
+                              "Order quantity exceeded product inventory.");
+        return;
+    }
     // 다이얼로그에서 저장한 멤버변수의 값들을 테이블위젯아이템으로 생성
     // 아이디는 중복되지 않도록 함수를 통해 마지막 ID에서 +1한 값을 사용
     QTableWidgetItem* orderIdItem =

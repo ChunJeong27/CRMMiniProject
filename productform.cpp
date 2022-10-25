@@ -75,7 +75,7 @@ int ProductForm::makeId()
     if( lastColumn < 0 )
         return 2000;
 
-    int creatId = ui->tableWidget->item(lastColumn - 1, 0)->text().toInt() + 1;
+    int creatId = ui->tableWidget->item(lastColumn, 0)->text().toInt() + 1;
     return creatId;
 }
 
@@ -113,12 +113,14 @@ void ProductForm::on_addPushButton_clicked()
         return;
     }
     else {
+        qDebug("iditem");
         QTableWidgetItem* idItem = new QTableWidgetItem(QString::number(makeId()));
         QTableWidgetItem* nameItem = new QTableWidgetItem(name);
         QTableWidgetItem* priceItem = new QTableWidgetItem(price);
         QTableWidgetItem* stockItem = new QTableWidgetItem(stock);
 
         int tableRowCount = ui->tableWidget->rowCount();
+        qDebug() << tableRowCount;
         ui->tableWidget->setRowCount( tableRowCount + 1);
 
         ui->tableWidget->setItem(tableRowCount, 0, idItem);
