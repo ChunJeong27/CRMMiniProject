@@ -72,8 +72,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>776</width>
-        <height>354</height>
+        <width>788</width>
+        <height>390</height>
        </rect>
       </property>
       <attribute name="label">
@@ -161,6 +161,13 @@
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <layout class="QGridLayout" name="gridLayout">
+             <item row="1" column="0">
+              <widget class="QPushButton" name="banishPushButton">
+               <property name="text">
+                <string>Banish</string>
+               </property>
+              </widget>
+             </item>
              <item row="0" column="0">
               <widget class="QPushButton" name="invitePushButton">
                <property name="text">
@@ -168,10 +175,10 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="banishPushButton">
+             <item row="2" column="0">
+              <widget class="QPushButton" name="logSavePushButton">
                <property name="text">
-                <string>Banish</string>
+                <string>Log Save</string>
                </property>
               </widget>
              </item>
@@ -201,8 +208,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>776</width>
-        <height>354</height>
+        <width>788</width>
+        <height>390</height>
        </rect>
       </property>
       <attribute name="label">

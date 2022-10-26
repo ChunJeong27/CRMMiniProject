@@ -9,6 +9,7 @@ class QTcpSocket;
 class QFile;
 class QProgressDialog;
 class QListWidgetItem;
+class LogThread;
 
 namespace Ui {
 class ServerForm;
@@ -48,8 +49,12 @@ private slots:
     void goOnSend(qint64);
 
 private:
+    const int BLOCK_SIZE = 1024;
+
     void writeSocket(QTcpSocket*, char, QByteArray);
     void disconnectSocket(QTcpSocket*);
+
+    LogThread* logThread;
 
     QTcpServer *tcpServer;
 

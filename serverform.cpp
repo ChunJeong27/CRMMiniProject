@@ -8,10 +8,10 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 #include <QFileDialog>
+#include <QDir>
 
 #include "chatroomform.h"
-
-#define BLOCK_SIZE  1024
+#include "logthread.h"
 
 ServerForm::ServerForm(QWidget *parent) :
     QWidget(parent),
@@ -24,6 +24,12 @@ ServerForm::ServerForm(QWidget *parent) :
     connect(ui->invitePushButton, SIGNAL(clicked()),
             this, SLOT(inviteClient()));
 
+    logThread = new LogThread(this);
+    logThread->start();
+
+    connect(ui->logSavePushButton, SIGNAL(clicked()),
+            logThread, SLOT(saveData()));
+
     tcpServer = new QTcpServer(this);
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(ConnectClient()));
 
@@ -31,7 +37,7 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("Chatting Server"),
                               tr("Unable to start the server: %1.")
                               .arg(tcpServer->errorString()));
-        close();
+//        close();
         return;
     }
 
@@ -53,7 +59,7 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("File Upload Server"),
                               tr("Unable to start the server: %1.")
                               .arg(ftpUploadServer->errorString( )));
-        close( );
+//        close( );
         return;
     }
 
@@ -70,7 +76,7 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("File Download Server"),
                               tr("Unable to start the server: %1.")
                               .arg(ftpUploadServer->errorString( )));
-        close( );
+//        close( );
         return;
     }
 
@@ -93,6 +99,8 @@ ServerForm::ServerForm(QWidget *parent) :
 ServerForm::~ServerForm()
 {
     delete ui;
+
+    logThread->terminate();
 }
 
 void ServerForm::writeSocket(QTcpSocket* socket, char type, QByteArray message)
@@ -355,6 +363,8 @@ void ServerForm::recieveData()
     log->setText(4, action);
     log->setText(5, body);
 
+    logThread->appendData(log);
+
 }
 
 void ServerForm::removeItem()
@@ -439,6 +449,8 @@ void ServerForm::readClient()
         log->setText(3, ipToClientName.value(ip));
         log->setText(4, "File Start " + filename);
         log->setToolTip(4, "File Start " + filename);
+
+        logThread->appendData(log);
 
         QFileInfo info(filename);
         QString currentFileName = info.fileName();

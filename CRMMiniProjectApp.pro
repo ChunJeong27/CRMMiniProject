@@ -12,6 +12,7 @@ SOURCES += \
     chatroomform.cpp \
     clientform.cpp \
     fileserverform.cpp \
+    logthread.cpp \
     main.cpp \
     mainwindow.cpp \
     orderform.cpp \
@@ -23,6 +24,7 @@ HEADERS += \
     chatroomform.h \
     clientform.h \
     fileserverform.h \
+    logthread.h \
     mainwindow.h \
     orderform.h \
     productform.h \
