@@ -308,7 +308,7 @@ void ChatRoomForm::downloadFile()   // readClient
 
         QFileInfo info(downloadFilename);
         QString currentFileName = info.fileName();
-        downloadNewFile = new QFile(currentFileName);
+        downloadNewFile = new QFile("client/" + currentFileName);
         downloadNewFile->open(QFile::WriteOnly);
 
     } else {

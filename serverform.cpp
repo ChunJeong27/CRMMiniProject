@@ -522,14 +522,17 @@ void ServerForm::disconnectSocket(QTcpSocket* sockect){
 
 /* 서버에서 채팅방으로 파일을 전송하기 위한 코드 */
 // 파일을 보내는 신호가 도착했을 때!!
-void ServerForm::sendFile(QListWidgetItem*) // Open the file and get the file name (including path)
+void ServerForm::sendFile(QListWidgetItem* fileNameItem) // Open the file and get the file name (including path)
 {
     transferLoadSize = 0;
     transferByteToWrite = 0;
     transferTotalSize = 0;
     transferOutBlock.clear();
 
-    QString filename = QFileDialog::getOpenFileName(this);
+//    QString filename = QFileDialog::getOpenFileName(this);
+    QString filename = QDir::currentPath() + "/" + fileNameItem->text();
+//    qDebug() << filename;
+//    return;
     transferFile = new QFile(filename);
     transferFile->open(QFile::ReadOnly);
 
