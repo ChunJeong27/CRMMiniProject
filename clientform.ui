@@ -93,7 +93,7 @@
            <item row="2" column="1">
             <widget class="QLineEdit" name="phoneNumLineEdit">
              <property name="inputMask">
-              <string>999-9999-9999</string>
+              <string>990-9990-9999</string>
              </property>
             </widget>
            </item>

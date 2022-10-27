@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->toolBar->setHidden(true);
 
     clientForm = new ClientForm;
     ui->tabWidget->addTab(clientForm, "Client Manager");
@@ -27,20 +28,80 @@ MainWindow::MainWindow(QWidget *parent)
     serverForm = new ServerForm;
     ui->tabWidget->addTab(serverForm, "Chat Server");
 
-    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
-    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
-    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
-    connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
-
-    connect(serverForm, SIGNAL(checkClientId(QString, QString)), clientForm, SLOT(checkIdName(QString,QString)));
-    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
-
-    connect(ui->action_Client_Manager, SIGNAL(triggered()), this, SLOT(clientTabAction()));
+    connect(ui->action_Add, &QAction::triggered, this, [=](){
+        switch(ui->tabWidget->currentIndex()){
+        case 0:
+            clientForm->addTableRow();
+            break;
+        case 1:
+            productForm->addTableRow();
+            break;
+        case 2:
+            orderForm->addTableRow();
+            break;
+        default:
+            break;
+        }});
+    connect(ui->action_Search, &QAction::triggered, this, [=](){
+        switch(ui->tabWidget->currentIndex()){
+        case 0:
+            clientForm->selectReturnPressedId();
+            break;
+        case 1:
+            productForm->selectReturnPressedId();
+            break;
+        case 2:
+            orderForm->selectReturnPressedId();
+            break;
+        default:
+            break;
+        }});
+    connect(ui->action_Modify, &QAction::triggered, this, [=](){
+        switch(ui->tabWidget->currentIndex()){
+        case 0:
+            clientForm->modifyTableRow();
+            break;
+        case 1:
+            productForm->modifyTableRow();
+            break;
+        case 2:
+            orderForm->modifyTableRow();
+            break;
+        default:
+            break;
+        }});
+    connect(ui->action_Remove, &QAction::triggered, this, [=](){
+        switch(ui->tabWidget->currentIndex()){
+        case 0:
+            clientForm->removeTableRow();
+            break;
+        case 1:
+            productForm->removeTableRow();
+            break;
+        case 2:
+            orderForm->removeTableRow();
+            break;
+        default:
+            break;
+        }});
+    connect(ui->action_Client_Manager, &QAction::triggered, this, [=](){
+        emit triggeredClientAction(qobject_cast<QWidget*>(clientForm));});
     connect(this, SIGNAL(triggeredClientAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
-    connect(ui->action_Product_Manager, SIGNAL(triggered()), this, SLOT(productTabAction()));
+    connect(ui->action_Product_Manager, &QAction::triggered, this, [=](){
+        emit triggeredProductAction(qobject_cast<QWidget*>(productForm));});
     connect(this, SIGNAL(triggeredProductAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
-    connect(ui->action_Order_Manager, SIGNAL(triggered()), this, SLOT(orderTabAction()));
+    connect(ui->action_Order_Manager, &QAction::triggered, this, [=](){
+        emit triggeredOrderAction(qobject_cast<QWidget*>(orderForm));});
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
+    connect(ui->action_New_Chat_Room, SIGNAL(triggered(bool)), this, SLOT(createChatRoom()));
+
+    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
+    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
+    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
+    connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));
+
+    connect(serverForm, SIGNAL(checkClientId(QString,QString)), clientForm, SLOT(searchIdName(QString,QString)));
+    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
 
     orderForm->loadData();
 
@@ -49,21 +110,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::clientTabAction()
-{
-    emit triggeredClientAction(qobject_cast<QWidget*>(clientForm));
-}
-
-void MainWindow::productTabAction()
-{
-    emit triggeredProductAction(qobject_cast<QWidget*>(productForm));
-}
-
-void MainWindow::orderTabAction()
-{
-    emit triggeredOrderAction(qobject_cast<QWidget*>(orderForm));
 }
 
 void MainWindow::createSeachingDialog()
@@ -75,16 +121,15 @@ void MainWindow::createSeachingDialog()
     connect(searchingDialog, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
     connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayRow(QList<QString>)));
 
-    connect(searchingDialog, SIGNAL(returnClient(QList<QString>)), orderForm, SLOT(addClientResult(QList<QString>)));
-    connect(searchingDialog, SIGNAL(returnProduct(QList<QString>)), orderForm, SLOT(addProductResult(QList<QString>)));
+    connect(searchingDialog, SIGNAL(returnClient(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
+    connect(searchingDialog, SIGNAL(returnProduct(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));
 
     searchingDialog->open();
 }
 
-void MainWindow::on_action_Chatting_triggered()
+void MainWindow::createChatRoom()
 {
     ChatRoomForm* chatRoomForm = new ChatRoomForm;
     connect(chatRoomForm, SIGNAL(clickedFileList(QListWidgetItem*)), serverForm, SLOT(sendFile(QListWidgetItem*)));
     chatRoomForm->show();
 }
-

@@ -22,11 +22,13 @@ public:
     ~MainWindow();
 
 private:
+    Ui::MainWindow *ui;
+
+private:
     ClientForm* clientForm;
     ProductForm* productForm;
     OrderForm* orderForm;
     ServerForm* serverForm;
-    ChattingForm* chattingForm;
 
 signals:
     void triggeredClientAction(QWidget*);
@@ -35,16 +37,7 @@ signals:
 
 public slots:
     void createSeachingDialog();
+    void createChatRoom();
 
-public slots:
-    void clientTabAction();
-    void productTabAction();
-    void orderTabAction();
-
-private slots:
-    void on_action_Chatting_triggered();
-
-private:
-    Ui::MainWindow *ui;
 };
 #endif // MAINWINDOW_H

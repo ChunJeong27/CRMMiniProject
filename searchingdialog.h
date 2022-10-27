@@ -15,6 +15,9 @@ public:
     explicit SearchingDialog(QWidget *parent = nullptr);
     ~SearchingDialog();
 
+private:
+    Ui::SearchingDialog *ui;
+
 protected:
 //    void closeEvent(QCloseEvent*) override;
 
@@ -28,14 +31,6 @@ public slots:
     void displayRow(QList<QString>);
     void returnSearching(int, int);
 
-private slots:
-
-    void on_clientPushButton_clicked();
-
-    void on_productPushButton_clicked();
-
-private:
-    Ui::SearchingDialog *ui;
 };
 
 #endif // SEARCHINGDIALOG_H

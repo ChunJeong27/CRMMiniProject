@@ -16,28 +16,38 @@ OrderForm::OrderForm(QWidget *parent) :
 
     connect(ui->tableWidget, SIGNAL(cellClicked(int,int)),
             this, SLOT(displayItem(int,int)));  // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
+    // 각각 ui 버튼의 기능을 슬롯 함수와 연결
+    connect(ui->clearPushButton, SIGNAL(clicked()), this, SLOT(clearLineEdit()));
+    connect(ui->addPushButton, SIGNAL(clicked()), this, SLOT(addTableRow()));
+    connect(ui->modifyPushButton, SIGNAL(clicked()),
+            this, SLOT(modifyTableRow()));
+    connect(ui->removePushButton, SIGNAL(clicked()),
+            this, SLOT(removeTableRow()));
     // 라인에디터에 따라 맞는 열을 검색하고 결과를 활성화시키는 기능
     connect(ui->clientNameLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
     connect(ui->clientPhoneNumLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
     connect(ui->clientAddressLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
     connect(ui->productNameLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
     connect(ui->productPriceLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
     connect(ui->amountLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(returnPressedSearching()));
+            this, SLOT(selectReturnPressedLineEdit()));
 
     connect(ui->orderIdLineEdit, SIGNAL(returnPressed()),
-            this, SLOT(on_searchPushButton_clicked())); // 아이디를 검색하고 행을 활성화하는 기능
+            this, SLOT(selectReturnPressedId())); // 아이디를 검색하고 행을 활성화하는 기능
     // 스핀박스 값이 바뀔 때 총액을 설정하는 기능을 람다함수로 구현
     connect(ui->quantitySpinBox, &QSpinBox::valueChanged, this, [=](int i){
         quint32 amount = ui->productPriceLineEdit->text().toUInt() * i;
         ui->amountLineEdit->setText(QString::number(amount));});
 
     connect(ui->selectPushButton, SIGNAL(clicked()), this, SIGNAL(clickedSearchButton()));
+
+    ui->tableWidget->hideColumn(1);
+    ui->tableWidget->hideColumn(2);
 
 }
 
@@ -116,7 +126,6 @@ void OrderForm::loadData()
             ui->tableWidget->setItem(tableRowCount, 9, orderAmountItem);
         }
     }
-    on_clearPushButton_clicked();   // 라인에디터를 클리어하기 위해 함수를 호출
     file.close();   // 데이터를 모두 불러온 후 파일을 닫아줌
 }
 
@@ -149,7 +158,7 @@ void OrderForm::displayItem(int row,int column)
 }
 
 /* 클리어 버튼이 눌렸을 때 모든 라인에디터를 초기화하는 슬롯 함수 */
-void OrderForm::on_clearPushButton_clicked()
+void OrderForm::clearLineEdit()
 {
     // 화면의 모든 라인에디터를 클리어
     ui->clientNameLineEdit->clear();
@@ -162,8 +171,43 @@ void OrderForm::on_clearPushButton_clicked()
     ui->amountLineEdit->clear();
 }
 
+void OrderForm::receiveClientInfo(QList<QString> result)
+{
+    QWidget* sentWidget(qobject_cast<QWidget*>(sender()));
+    // 시그널을 보낸 sender를 확인하기 위해 QWidget 형태로 받아옴
+
+    // 고객 관리 탭에서 받아온 고객 정보를 멤버 변수에 임시 저장
+    clientId = result.at(0);
+    clientName = result.at(1);
+    clientPhoneNum = result.at(2);
+    clientAddress = result.at(3);
+    if ( "SearchingDialog" == sentWidget->objectName() ) {
+        // 다이얼로그에서 받아온 고객 정보의 경우 라인에디터에 저장
+        ui->clientNameLineEdit->setText(result.at(1));
+        ui->clientPhoneNumLineEdit->setText(result.at(2));
+        ui->clientAddressLineEdit->setText(result.at(3));
+    }
+}
+
+void OrderForm::receiveProductInfo(QList<QString> result)
+{
+    QWidget* sentWidget(qobject_cast<QWidget*>(sender()));
+    //시그널을 보낸 sender를 확인하기 위해 QWidget 변수로 저장
+
+    // 시그널로부터 받아온 상품 정보를 멤버 변수에 임시 저장
+    productId = result.at(0);
+    productName = result.at(1);
+    productPrice = result.at(2);
+    productStock = result.at(3);
+    if ( "SearchingDialog" == sentWidget->objectName() ) {
+        // 다이얼로그로부터 가져온 상품 정보는 라인에디터에도 저장
+        ui->productNameLineEdit->setText(result.at(1));
+        ui->productPriceLineEdit->setText(result.at(2));
+    }
+}
+
 /* 라인에디터의 값들을 데이블위젯에 마지막 행에 추가하는 슬롯 함수 */
-void OrderForm::on_addPushButton_clicked()
+void OrderForm::addTableRow()
 {
     if( ui->quantitySpinBox->text().toUInt() > productStock.toUInt()){
         QMessageBox::critical(this, "Order Manager",
@@ -205,7 +249,7 @@ void OrderForm::on_addPushButton_clicked()
 }
 
 /* ID를 통해 테이블 위젯을 검색하고 행을 활성화하는 함수 */
-void OrderForm::on_searchPushButton_clicked()
+void OrderForm::selectReturnPressedId()
 {
     QString searchingText(ui->orderIdLineEdit->text()); // ID값을 문자열로 저장
     QList<QTableWidgetItem*> searchingResult;   // 검색 결과를 저장하기 위한 리스트 변수 생성
@@ -224,59 +268,8 @@ void OrderForm::on_searchPushButton_clicked()
     }
 }
 
-/* 테이블위젯의 값을 변경하는 함수 */
-void OrderForm::on_modifyPushButton_clicked()
-{
-    // 현재 선택된 행의 값을 변수에 저장
-    int tableCurrentRow = ui->tableWidget->currentRow();
-    // 다이얼로그로부터 가져온 멤버 변수에 저장된 값을 아이템으로 생성
-    QTableWidgetItem* clientIdItem = new QTableWidgetItem(clientId);
-    QTableWidgetItem* productIdItem = new QTableWidgetItem(productId);
-    // 다이얼로그로부터 라인에디터에 저장한 값들을 가져온 후 아이템으로 생성
-    QTableWidgetItem* clientNameItem =
-            new QTableWidgetItem(ui->clientNameLineEdit->text());
-    QTableWidgetItem* clientPhoneNumItem =
-            new QTableWidgetItem(ui->clientPhoneNumLineEdit->text());
-    QTableWidgetItem* clientAddressItem =
-            new QTableWidgetItem(ui->clientAddressLineEdit->text());
-
-    QTableWidgetItem* productNameItem =
-            new QTableWidgetItem(ui->productNameLineEdit->text());
-    QTableWidgetItem* productPriceItem =
-            new QTableWidgetItem(ui->productPriceLineEdit->text());
-    // 스핀박스와 라인에디터에 수정된 값을 가져온 후 아이템으로 생성
-    QTableWidgetItem* orderQuantityItem =
-            new QTableWidgetItem(ui->quantitySpinBox->text());
-    QTableWidgetItem* orderAmountItem =
-            new QTableWidgetItem(ui->amountLineEdit->text());
-    // 활성화된 행에 열에 맞는 각 아이템들을 저장
-    ui->tableWidget->setItem(tableCurrentRow, 1, clientIdItem);
-    ui->tableWidget->setItem(tableCurrentRow, 2, productIdItem);
-    ui->tableWidget->setItem(tableCurrentRow, 3, clientNameItem);
-    ui->tableWidget->setItem(tableCurrentRow, 4, clientPhoneNumItem);
-    ui->tableWidget->setItem(tableCurrentRow, 5, clientAddressItem);
-    ui->tableWidget->setItem(tableCurrentRow, 6, productNameItem);
-    ui->tableWidget->setItem(tableCurrentRow, 7, productPriceItem);
-    ui->tableWidget->setItem(tableCurrentRow, 8, orderQuantityItem);
-    ui->tableWidget->setItem(tableCurrentRow, 9, orderAmountItem);
-}
-
-/* 테이블위젯의 선택된 행을 삭제하는 함수 */
-void OrderForm::on_removePushButton_clicked()
-{
-    // 삭제에 관한 내용을 다시 한번 확인하기 위해 메시지박스를 출력
-    if(QMessageBox::warning(this, "Order Manager",
-                            "Are you sure you want to delete it?",
-                            QMessageBox::Yes | QMessageBox::No)
-            == QMessageBox::Yes){
-        // Yes를 클릭할 경우 행을 삭제
-        ui->tableWidget->removeRow(ui->tableWidget->currentRow());
-    }
-
-}
-
 /* 라인에디터에서 returnPressed 시그널을 발생시켰을 때 검색기능을 수행하기 위한 슬롯 함수*/
-void OrderForm::returnPressedSearching()
+void OrderForm::selectReturnPressedLineEdit()
 {
     // 신호를 발생시킨 라인에디터를 변수에 저장
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(sender());
@@ -328,23 +321,53 @@ void OrderForm::returnPressedSearching()
     }
 }
 
-void OrderForm::addClientResult(QList<QString> result)
+/* 테이블위젯의 값을 변경하는 함수 */
+void OrderForm::modifyTableRow()
 {
-    clientId = result.at(0);
-    clientName = result.at(1);
-    clientPhoneNum = result.at(2);
-    clientAddress = result.at(3);
-    ui->clientNameLineEdit->setText(result.at(1));
-    ui->clientPhoneNumLineEdit->setText(result.at(2));
-    ui->clientAddressLineEdit->setText(result.at(3));
+    // 현재 선택된 행의 값을 변수에 저장
+    int tableCurrentRow = ui->tableWidget->currentRow();
+    // 다이얼로그로부터 가져온 멤버 변수에 저장된 값을 아이템으로 생성
+    QTableWidgetItem* clientIdItem = new QTableWidgetItem(clientId);
+    QTableWidgetItem* productIdItem = new QTableWidgetItem(productId);
+    // 다이얼로그로부터 라인에디터에 저장한 값들을 가져온 후 아이템으로 생성
+    QTableWidgetItem* clientNameItem =
+            new QTableWidgetItem(ui->clientNameLineEdit->text());
+    QTableWidgetItem* clientPhoneNumItem =
+            new QTableWidgetItem(ui->clientPhoneNumLineEdit->text());
+    QTableWidgetItem* clientAddressItem =
+            new QTableWidgetItem(ui->clientAddressLineEdit->text());
+
+    QTableWidgetItem* productNameItem =
+            new QTableWidgetItem(ui->productNameLineEdit->text());
+    QTableWidgetItem* productPriceItem =
+            new QTableWidgetItem(ui->productPriceLineEdit->text());
+    // 스핀박스와 라인에디터에 수정된 값을 가져온 후 아이템으로 생성
+    QTableWidgetItem* orderQuantityItem =
+            new QTableWidgetItem(ui->quantitySpinBox->text());
+    QTableWidgetItem* orderAmountItem =
+            new QTableWidgetItem(ui->amountLineEdit->text());
+    // 활성화된 행에 열에 맞는 각 아이템들을 저장
+    ui->tableWidget->setItem(tableCurrentRow, 1, clientIdItem);
+    ui->tableWidget->setItem(tableCurrentRow, 2, productIdItem);
+    ui->tableWidget->setItem(tableCurrentRow, 3, clientNameItem);
+    ui->tableWidget->setItem(tableCurrentRow, 4, clientPhoneNumItem);
+    ui->tableWidget->setItem(tableCurrentRow, 5, clientAddressItem);
+    ui->tableWidget->setItem(tableCurrentRow, 6, productNameItem);
+    ui->tableWidget->setItem(tableCurrentRow, 7, productPriceItem);
+    ui->tableWidget->setItem(tableCurrentRow, 8, orderQuantityItem);
+    ui->tableWidget->setItem(tableCurrentRow, 9, orderAmountItem);
 }
 
-void OrderForm::addProductResult(QList<QString> result)
+/* 테이블위젯의 선택된 행을 삭제하는 함수 */
+void OrderForm::removeTableRow()
 {
-    productId = result.at(0);
-    productName = result.at(1);
-    productPrice = result.at(2);
-    productStock = result.at(3);
-    ui->productNameLineEdit->setText(result.at(1));
-    ui->productPriceLineEdit->setText(result.at(2));
+    // 삭제에 관한 내용을 다시 한번 확인하기 위해 메시지박스를 출력
+    if(QMessageBox::warning(this, "Order Manager",
+                            "Are you sure you want to delete it?",
+                            QMessageBox::Yes | QMessageBox::No)
+            == QMessageBox::Yes){
+        // Yes를 클릭할 경우 행을 삭제
+        ui->tableWidget->removeRow(ui->tableWidget->currentRow());
+    }
+
 }

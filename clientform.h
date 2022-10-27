@@ -34,23 +34,16 @@ signals:
 
 public slots:
     int makeId();   // ID가 중복되지 않도록 생성하는 함수
-    void displayItem(int,int);  // 테이블위젯에서 선택한 열을 라인에디터에 출력하는 함수
+    void displayLineEdit(int,int);  // 테이블위젯에서 선택한 열을 라인에디터에 표시하는 함수
+    void clearLineEdit();   // 모든 라인에디터를 초기화하는 함수
+    void addTableRow();     // 라인에디터의 데이터를 테이블위젯에 추가하는 함수
+    void selectReturnPressedId();   // ID를 통해 테이블위젯의 데이터를 검색하는 함수
     // 라인에디터에서 returnPressed가 발생했을 때 검색기능을 수행하는 함수
-    void returnPressedSearching();
+    void selectReturnPressedLineEdit();
+    void modifyTableRow();  // 선택된 테이블위젯의 데이터를 변경하는 함수
+    void removeTableRow();  // 선택된 테이블위젯을 제거하는 함수
     void searching(int, QString);   // 열에 따라 데이터를 검색하는 함수
-    void checkIdName(QString, QString); // ID와 이름을 받아 존재하는지 확인하는 함수
-
-private slots:
-    // 모든 라인에디터를 초기화하는 함수
-    void on_clearPushButton_clicked();
-    // 라인에디터의 데이터를 테이블위젯에 추가하는 함수
-    void on_addPushButton_clicked();
-    // ID를 통해 테이블위젯의 데이터를 검색하는 함수
-    void on_searchPushButton_clicked();
-    // 선택된 테이블위젯의 데이터를 변경하는 함수
-    void on_modifyPushButton_clicked();
-    // 선택된 테이블위젯을 제거하는 함수
-    void on_removePushButton_clicked();
+    void searchIdName(QString, QString); // ID와 이름을 받아 존재하는지 확인하는 함수
 
 };
 
