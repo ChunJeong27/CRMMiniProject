@@ -24,6 +24,8 @@ typedef enum {
     FileTrans_Start,   // 파일 전송 시작(파일명) --> 파일 오픈
     FileTransfer,      // 파일 데이터 전송      --> 데이터를 파일에 저장
     FileTrans_End,     // 파일 전송 완료        --> 파일 닫기
+    FileUpload,
+    FileDownload,
     ClientList,
     FileList,
 } Header;
@@ -47,19 +49,21 @@ signals:
 private slots:
     void receiveData();
     void sendData();
-    void disconnect();
+    void disconnectServer();
     void connectPushButton();
     void goOnSend(qint64);
     void sendFile();
-
     void downloadFile();
 
 private:
     void closeEvent(QCloseEvent*) override;
+    void writeSocket(char, QByteArray);
 
-    QTcpSocket *clientSocket;
-    QTcpSocket *fileClient;
-    QProgressDialog* progressDialog;    // 파일 진행 확인
+    const int BLOCK_SIZE = 1024;
+
+    QTcpSocket *chatSocket;
+    QTcpSocket *uploadSocket;
+    QProgressDialog* uploadProgressDialog;    // 파일 진행 확인
     QFile* file;
     qint64 loadSize;
     qint64 byteToWrite;
@@ -75,6 +79,7 @@ private:
     QFile* downloadNewFile;
     QByteArray downloadInBlock;
 
+//    UploadProtocol* uploadFile;
 };
 
 #endif // CHATROOMFORM_H

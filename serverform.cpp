@@ -100,7 +100,14 @@ ServerForm::~ServerForm()
 {
     delete ui;
 
+    foreach(QTcpSocket* socket, clientList){
+        socket->disconnectFromHost();
+    }
+
     logThread->terminate();
+    tcpServer->close();
+    ftpUploadServer->close();
+    ftpTransferServer->close();
 }
 
 void ServerForm::writeSocket(QTcpSocket* socket, char type, QByteArray message)
@@ -321,7 +328,7 @@ void ServerForm::recieveData()
             }
         }
 
-        action = "Banish";
+        action = "Kick Out";
     } break;
 
     case Chat::Disconnect:
@@ -349,7 +356,12 @@ void ServerForm::recieveData()
                 writeSocket(sock, Chat::ClientList, sendList);
             }
         }
+        action = "Disconnect";
     } break;
+
+    case Chat::FileDownload:
+        action = "Download";
+        break;
 
     default:
         break;
@@ -424,6 +436,7 @@ void ServerForm::acceptTransferConnection()
     transferFileClient = ftpTransferServer->nextPendingConnection();
 
     connect(transferFileClient, SIGNAL(bytesWritten(qint64)), this, SLOT(goOnSend(qint64)));
+//    uploadServerFile = new UploadProtocol(true, transferFileClient, "127.0.0.1", 19200, this);
 }
 
 void ServerForm::readClient()
@@ -477,9 +490,16 @@ void ServerForm::readClient()
         QListWidgetItem* fileItem = new QListWidgetItem(currentFileName, ui->fileListWidget);
         ui->fileListWidget->addItem(fileItem);
 
+        QByteArray outByteArray;
+        QList fileList = ui->fileListWidget->findItems("", Qt::MatchContains);
+//        outByteArray.append(QString::number(fileList.size()).toUtf8() + "/");
+        foreach(QListWidgetItem* item, fileList){
+            outByteArray.append(item->text().toUtf8() + "/");     // 채팅방 참여자 출력 기능 보류
+        }
+
         foreach(QTcpSocket* sock, clientList){
             if(sock->peerAddress().toString() == ip)
-                sock->write(Chat::FileList + currentFileName.toUtf8());
+                sock->write(Chat::FileList + outByteArray);
         }
 
         inBlock.clear();
@@ -583,3 +603,4 @@ void ServerForm::goOnSend(qint64 numBytes) // Start sending file content
         transferProgressDialog->reset();
     }
 }
+

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QList>
+#include "uploadprotocol.h"
 
 class QTcpServer;
 class QTcpSocket;
@@ -89,6 +90,8 @@ private:
     QTcpSocket* transferFileClient;
 
     QProgressDialog* transferProgressDialog;
+
+    UploadProtocol* uploadServerFile;
 
 
 
