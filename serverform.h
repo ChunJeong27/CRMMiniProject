@@ -27,7 +27,6 @@ private:
     Ui::ServerForm *ui;
 
 private:
-    void disconnectSocket(QTcpSocket*);
     void writeSocket(QTcpSocket*, char, QByteArray);
 
     const int BLOCK_SIZE = 1024;

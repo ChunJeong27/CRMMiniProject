@@ -117,9 +117,9 @@ void MainWindow::createSeachingDialog()
     SearchingDialog* searchingDialog = new SearchingDialog(orderForm);
 
     connect(searchingDialog, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
-    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayRow(QList<QString>)));
+    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
     connect(searchingDialog, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
-    connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayRow(QList<QString>)));
+    connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
 
     connect(searchingDialog, SIGNAL(returnClient(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
     connect(searchingDialog, SIGNAL(returnProduct(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));

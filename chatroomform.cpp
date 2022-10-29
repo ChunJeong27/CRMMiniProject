@@ -54,7 +54,7 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     progressDialog->setAutoClose(true);
     progressDialog->reset();
 
-    setWindowTitle(tr("Client Chatting Application"));
+    setWindowTitle(tr("Client Chat Room Application"));
 
 }
 
@@ -182,6 +182,7 @@ void ChatRoomForm::receiveData()
             ui->clientListWidget->addItem(nameItem);    // 생성한 아이템을 리스트위젯에 추가
         }
         int fileCnt = dataList.takeFirst().toInt(); // 파일의 리스트 개수를 변수로 선언
+        ui->fileListWidget->clear();  // 파일 리스트를 갱신하기 위해 초기화
         for( int i = 0; i < fileCnt; i++){  // 파일리스트 개수만큼 반복
             QListWidgetItem* fileItem =
                     new QListWidgetItem(dataList.takeFirst());

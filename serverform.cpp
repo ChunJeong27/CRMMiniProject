@@ -37,7 +37,6 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("Chatting Server"),
                               tr("Unable to start the server: %1.")
                               .arg(tcpServer->errorString()));
-//        close();
         return;
     }
 
@@ -59,7 +58,6 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("File Upload Server"),
                               tr("Unable to start the server: %1.")
                               .arg(uploadServer->errorString( )));
-//        close( );
         return;
     }
 
@@ -76,7 +74,6 @@ ServerForm::ServerForm(QWidget *parent) :
         QMessageBox::critical(this, tr("File Download Server"),
                               tr("Unable to start the server: %1.")
                               .arg(uploadServer->errorString( )));
-//        close( );
         return;
     }
 
@@ -86,9 +83,6 @@ ServerForm::ServerForm(QWidget *parent) :
     progressDialog = new QProgressDialog(0);
     progressDialog->setAutoClose(true);
     progressDialog->reset();
-
-//    QString filename = QFileDialog::getOpenFileName(this);
-//    qDebug() << filename;
 
 }
 
@@ -111,28 +105,6 @@ void ServerForm::removeItem()
     QTcpSocket *clientConnection = qobject_cast<QTcpSocket *>(sender());
     clientSocketList.removeOne(clientConnection);
     clientConnection->deleteLater();
-}
-
-void ServerForm::disconnectSocket(QTcpSocket* sockect){
-    if(!clientSocketList.isEmpty()){
-        QList<QTcpSocket*>::Iterator eraseSock;
-        for(auto sock = clientSocketList.begin(); clientSocketList.end() != sock; sock++){
-            if(*sock == sockect){
-                eraseSock = sock;
-            }
-        }
-        clientSocketList.erase(eraseSock);
-    }
-
-    if(!waitingClient.isEmpty()){
-        QList<QTcpSocket*>::Iterator eraseSock;
-        for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
-            if(*sock == sockect){
-                eraseSock = sock;
-            }
-        }
-        waitingClient.erase(eraseSock);
-    }
 }
 
 void ServerForm::writeSocket(QTcpSocket* socket, char type, QByteArray message)
@@ -203,7 +175,7 @@ void ServerForm::recieveData()
                                         + "(ID:" + idName.at(1) + ")");
                 }
             }
-            action = "Connect";
+            action = "CONNECT";
         } else {
             disconnect(clientSocket);
             QList<QListWidgetItem*> findList = ui->clientListWidget->findItems("::ffff:", Qt::MatchStartsWith);
@@ -217,15 +189,7 @@ void ServerForm::recieveData()
 
     case Chat::Enter:
     {
-        if(!waitingClient.isEmpty()){
-            QList<QTcpSocket*>::Iterator eraseSock;
-            for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
-                if(*sock == clientSocket){
-                    eraseSock = sock;
-                }
-            }
-            waitingClient.erase(eraseSock);
-        }
+        waitingClient.removeOne(clientSocket);
         foreach(auto t, waitingClient)
             qDebug() << t->peerPort();
 
@@ -256,14 +220,12 @@ void ServerForm::recieveData()
                 writeSocket(sock, Chat::Enter, outByteArray);
             }
         }
-
-        if( "Invite" != action )
-            action = "Enter";
+        action = "ENTER";
     } break;
 
     case Chat::Leave:
         waitingClient.append(clientSocket);
-        action = "Leave";
+        action = "LEAVE";
         break;
 
     case Chat::Message:
@@ -288,15 +250,7 @@ void ServerForm::recieveData()
 
     case Chat::Invite:
     {
-        if(!waitingClient.isEmpty()){
-            QList<QTcpSocket*>::Iterator eraseSock;
-            for(auto sock = waitingClient.begin(); waitingClient.end() != sock; sock++){
-                if(*sock == clientSocket){
-                    eraseSock = sock;
-                }
-            }
-            waitingClient.erase(eraseSock);
-        }
+        waitingClient.removeOne(clientSocket);
         foreach(auto t, waitingClient)
             qDebug() << t->peerPort();
 
@@ -327,8 +281,7 @@ void ServerForm::recieveData()
                 writeSocket(sock, Chat::Enter, outByteArray);
             }
         }
-
-        action = "Invite";
+        action = "INVITE";
     } break;
 
     case Chat::KickOut:
@@ -352,13 +305,13 @@ void ServerForm::recieveData()
                     writeSocket(sock, Chat::Message, msg);
             }
         }
-
-        action = "Kick Out";
+        action = "KICK OUT";
     } break;
 
     case Chat::Disconnect:
     {
-        disconnect(clientSocket);
+        clientSocketList.removeOne(clientSocket);
+        waitingClient.removeOne(clientSocket);
 
         QList<QListWidgetItem*> findList = ui->clientListWidget->findItems(body, Qt::MatchExactly);
         if(!findList.isEmpty()){
@@ -381,11 +334,11 @@ void ServerForm::recieveData()
                 writeSocket(sock, Chat::ClientList, sendList);
             }
         }
-        action = "Disconnect";
+        action = "DISCONNECT";
     } break;
 
     case Chat::FileDownload:
-        action = "Download";
+        action = "DOWNLOAD";
         break;
 
     default:
@@ -399,7 +352,6 @@ void ServerForm::recieveData()
     log->setText(3, clientName[ipPort]);
     log->setText(4, action);
     log->setText(5, body);
-
     logThread->appendData(log);
 
 }
@@ -439,19 +391,16 @@ void ServerForm::acceptUploadConnection()
     ui->textEdit->append(tr("Connected, preparing to receive files!"));
 
     QTcpSocket* ftpSocket = uploadServer->nextPendingConnection();
-
     connect(ftpSocket, SIGNAL(readyRead()), this, SLOT(readClient()));
 }
 
 void ServerForm::acceptTransferConnection()
 {
-    qDebug("Connected, preparing to receive files!(Download)");
-    ui->textEdit->append(tr("Connected, preparing to receive files!(Download)"));
+    qDebug("Connected, preparing to transfer files!(Download)");
+    ui->textEdit->append(tr("Connected, preparing to transfer files!(Download)"));
 
     transferSocket = transferServer->nextPendingConnection();
-
     connect(transferSocket, SIGNAL(bytesWritten(qint64)), this, SLOT(goOnSend(qint64)));
-//    uploadServerFile = new UploadProtocol(true, transferSocket, "127.0.0.1", 19200, this);
 }
 
 void ServerForm::readClient()
@@ -470,21 +419,21 @@ void ServerForm::readClient()
         in >> uploadTotalSize >> byteReceived >> filename;
         progressDialog->setMaximum(uploadTotalSize);
 
-        QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
-        log->setText(0, QDateTime::currentDateTime().toString());
-        log->setText(1, socket->peerAddress().toString());
-        log->setText(2, QString::number(socket->peerPort()));
-        log->setText(3, ipToClientName.value(ip));
-        log->setText(4, "File Start " + filename);
-        log->setToolTip(4, "File Start " + filename);
-
-        logThread->appendData(log);
-
         QFileInfo info(filename);
         QString currentFileName = info.fileName();
         newFile = new QFile(currentFileName);
         newFile->open(QFile::WriteOnly);
 
+        QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+        log->setText(0, QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss"));
+        log->setText(1, socket->peerAddress().toString());
+        log->setText(2, QString::number(socket->peerPort()));
+//        log->setText(3, ipToClientName.value(ip));
+        log->setText(3, ipToClientName.value(ip));
+        log->setText(4, "START UPLOADING");
+        log->setText(5, currentFileName);
+        log->setToolTip(5, currentFileName);
+        logThread->appendData(log);
     } else {
         inBlock = socket->readAll();        // 소켓 변경
 
@@ -502,14 +451,24 @@ void ServerForm::readClient()
         QFileInfo info(filename);
         QString currentFileName = info.fileName();
 
+        QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+        log->setText(0, QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss"));
+        log->setText(1, socket->peerAddress().toString());
+        log->setText(2, QString::number(socket->peerPort()));
+//        log->setText(3, ipToClientName.value(ip));
+        log->setText(3, ipToClientName.value(ip));
+        log->setText(4, "UPLOAD FINSHED");
+        log->setText(5, currentFileName);
+        log->setToolTip(5, currentFileName);
+        logThread->appendData(log);
+
         QListWidgetItem* fileItem = new QListWidgetItem(currentFileName, ui->fileListWidget);
         ui->fileListWidget->addItem(fileItem);
 
         QByteArray outByteArray;
-        QList fileList = ui->fileListWidget->findItems("", Qt::MatchContains);
-//        outByteArray.append(QString::number(fileList.size()).toUtf8() + "/");
+        QList<QListWidgetItem*> fileList = ui->fileListWidget->findItems("", Qt::MatchContains);
         foreach(QListWidgetItem* item, fileList){
-            outByteArray.append(item->text().toUtf8() + "/");     // 채팅방 참여자 출력 기능 보류
+            outByteArray.append(item->text().toUtf8() + "/");
         }
 
         foreach(QTcpSocket* sock, clientSocketList){
@@ -538,10 +497,7 @@ void ServerForm::sendFile(QListWidgetItem* fileNameItem) // Open the file and ge
     transferTotalSize = 0;
     outBlock.clear();
 
-//    QString filename = QFileDialog::getOpenFileName(this);
     QString filename = QDir::currentPath() + "/" + fileNameItem->text();
-//    qDebug() << filename;
-//    return;
     file = new QFile(filename);
     file->open(QFile::ReadOnly);
 
@@ -592,4 +548,3 @@ void ServerForm::goOnSend(qint64 numBytes) // Start sending file content
         progressDialog->reset();
     }
 }
-
