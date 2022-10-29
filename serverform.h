@@ -3,7 +3,6 @@
 
 #include <QWidget>
 #include <QList>
-#include "uploadprotocol.h"
 
 class QTcpServer;
 class QTcpSocket;
@@ -27,6 +26,37 @@ public:
 private:
     Ui::ServerForm *ui;
 
+private:
+    void disconnectSocket(QTcpSocket*);
+    void writeSocket(QTcpSocket*, char, QByteArray);
+
+    const int BLOCK_SIZE = 1024;
+    QTcpServer* tcpServer;
+    QList<QTcpSocket*> clientSocketList;
+    QHash<QString, QString> clientName;     // ip:port, Name
+    QList<QTcpSocket*> waitingClient;  // Socket
+
+    QTcpServer* uploadServer;
+    QFile* newFile;
+    QProgressDialog* progressDialog;
+    QHash<QString, QString> ipToClientName;
+    QByteArray inBlock;
+    QString filename;
+    qint64 uploadTotalSize;
+    qint64 byteReceived;
+    bool idCheck;
+
+    QTcpServer* transferServer;
+    QTcpSocket* transferSocket;
+    qint64 loadSize;
+    qint64 byteToWrite;
+    qint64 transferTotalSize;
+    QByteArray outBlock;
+    QFile* file;
+    QList<QString> fileNameList;
+
+    LogThread* logThread;
+
 signals:
     void checkClientId(QString, QString);
 
@@ -34,66 +64,17 @@ public slots:
     void isClient(bool);
 
 private slots:
-    void ConnectClient();
-    void recieveData();
     void removeItem();
+    void connectClient();
+    void recieveData();
     void inviteClient();
-    void banishClient();
+    void kickOutClient();
 
     void acceptUploadConnection();
     void readClient();
-
     void acceptTransferConnection();
-
     void sendFile(QListWidgetItem*);
-//    void triggeredFileSend(QListWidgetItem*);
     void goOnSend(qint64);
-
-private:
-    const int BLOCK_SIZE = 1024;
-
-    void writeSocket(QTcpSocket*, char, QByteArray);
-    void disconnectSocket(QTcpSocket*);
-
-    LogThread* logThread;
-
-    QTcpServer *tcpServer;
-
-    QList<QTcpSocket*> clientList;
-    QHash<QString, QString> clientName;     // ip:port, Name
-    QList<QTcpSocket*> waitingClient;  // Socket
-
-    QTcpServer* ftpUploadServer;
-    QFile* newFile;
-    QProgressDialog* progressDialog;
-
-    QHash<QString, QString> ipToClientName;
-
-    QByteArray inBlock;
-    QString filename;
-    qint64 uploadTotalSize;
-    qint64 uploadByteReceived;
-
-    bool idCheck;
-
-    QList<QString> fileNameList;
-
-    QTcpServer* ftpTransferServer;
-
-    qint64 transferLoadSize;
-    qint64 transferByteToWrite;
-    qint64 transferTotalSize;
-    QByteArray transferOutBlock;
-
-    QFile* transferFile;
-    bool isTransferSent = false;
-    QTcpSocket* transferFileClient;
-
-    QProgressDialog* transferProgressDialog;
-
-    UploadProtocol* uploadServerFile;
-
-
 
 };
 

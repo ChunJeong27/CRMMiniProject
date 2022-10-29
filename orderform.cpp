@@ -15,7 +15,7 @@ OrderForm::OrderForm(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->tableWidget, SIGNAL(cellClicked(int,int)),
-            this, SLOT(displayItem(int,int)));  // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
+            this, SLOT(displayLineEdit(int,int)));  // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
     // 각각 ui 버튼의 기능을 슬롯 함수와 연결
     connect(ui->clearPushButton, SIGNAL(clicked()), this, SLOT(clearLineEdit()));
     connect(ui->addPushButton, SIGNAL(clicked()), this, SLOT(addTableRow()));
@@ -143,7 +143,7 @@ int OrderForm::makeId()
 }
 
 /* 시그널에서 발생한 행의 값을 통해 테이블위젯의 행을 라인에디터에 표시하는 슬롯 함수 */
-void OrderForm::displayItem(int row,int column)
+void OrderForm::displayLineEdit(int row,int column)
 {
     Q_UNUSED(column);   // 사용하지 않는 열 변수를 명시적으로 표시
     // 테이블위젯에서 행에 맞는 값을 가져온 후 라인에디터에 저장
@@ -264,7 +264,7 @@ void OrderForm::selectReturnPressedId()
     // ID 라인에디터의 열의 값인 0과 검색 결과의 열이 일치할 경우 조건문 수행
     if ( 0 == searchingColumn ){
         ui->tableWidget->selectRow(searchingRow);   // 검색 결과의 행을 활성화
-        displayItem(searchingRow, 0);   // 검색 결과의 값을 라인에디터에 저장
+        displayLineEdit(searchingRow, 0);   // 검색 결과의 값을 라인에디터에 저장
     }
 }
 
@@ -317,7 +317,7 @@ void OrderForm::selectReturnPressedLineEdit()
     if ( searchingColumn == lineEditColumn )
     {
         ui->tableWidget->selectRow(searchingRow);   // 검색 결과의 행을 활성화
-        displayItem(searchingRow, 0);       // 검색 결과의 값을 라인에디터에 저장
+        displayLineEdit(searchingRow, 0);       // 검색 결과의 값을 라인에디터에 저장
     }
 }
 

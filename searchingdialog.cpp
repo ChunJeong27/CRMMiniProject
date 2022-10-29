@@ -60,7 +60,7 @@ SearchingDialog::~SearchingDialog()
 }
 
 /* 다른 Form에서 보낸 데이터 리스트를 다이얼로그 테이블위젯에 출력하는 슬롯 함수 */
-void SearchingDialog::displayRow(QList<QString> result)
+void SearchingDialog::displayTableRow(QList<QString> result)
 {
     QWidget* form = qobject_cast<QWidget*>(sender());
     // 보낸 from에 따라 데이터를 처리하기 위해 sender를 동적 변환 후 변수로 선언

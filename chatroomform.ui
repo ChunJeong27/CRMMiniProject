@@ -94,7 +94,7 @@
      <item>
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0">
-        <widget class="QPushButton" name="statusPushButton">
+        <widget class="QPushButton" name="actionPushButton">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -107,9 +107,9 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QPushButton" name="quitPushButton">
+        <widget class="QPushButton" name="disconnectPushButton">
          <property name="text">
-          <string>&amp;Quit</string>
+          <string>&amp;Disconnect</string>
          </property>
         </widget>
        </item>
@@ -183,7 +183,7 @@
            <string>Files to Upload</string>
           </property>
          </widget>
-         <widget class="QLineEdit" name="lineEdit">
+         <widget class="QLineEdit" name="fileLineEdit">
           <property name="readOnly">
            <bool>true</bool>
           </property>

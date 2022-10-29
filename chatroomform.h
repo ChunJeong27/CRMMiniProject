@@ -20,16 +20,12 @@ typedef enum {
     Leave,             // 채팅방 퇴장         --> 초대 가능
     Disconnect,            // 로그 아웃(서버 단절) --> 초대 불가능
     Invite,            // 초대
-    Banish,           // 강퇴
-    FileTrans_Start,   // 파일 전송 시작(파일명) --> 파일 오픈
-    FileTransfer,      // 파일 데이터 전송      --> 데이터를 파일에 저장
-    FileTrans_End,     // 파일 전송 완료        --> 파일 닫기
-    FileUpload,
-    FileDownload,
+    KickOut,           // 강퇴
     ClientList,
     FileList,
+    FileUpload,
+    FileDownload,
 } Header;
-
 }
 
 class ChatRoomForm : public QWidget
@@ -43,27 +39,15 @@ public:
 private:
     Ui::ChatRoomForm *ui;
 
-signals:
-    void clickedFileList(QListWidgetItem*);
-
-private slots:
-    void receiveData();
-    void sendData();
-    void disconnectServer();
-    void connectPushButton();
-    void goOnSend(qint64);
-    void sendFile();
-    void downloadFile();
-
 private:
     void closeEvent(QCloseEvent*) override;
     void writeSocket(char, QByteArray);
 
     const int BLOCK_SIZE = 1024;
 
-    QTcpSocket *chatSocket;
-    QTcpSocket *uploadSocket;
-    QProgressDialog* uploadProgressDialog;    // 파일 진행 확인
+    QTcpSocket* chatSocket;
+    QTcpSocket* uploadSocket;
+    QProgressDialog* progressDialog;    // 파일 진행 확인
     QFile* file;
     qint64 loadSize;
     qint64 byteToWrite;
@@ -71,15 +55,25 @@ private:
     QByteArray outBlock;
     bool isSent = false;
 
-    QTcpSocket* downloadFileClient;
-    QProgressDialog* downloadProgressDialog;
+    QTcpSocket* downloadSocket;
     qint64 downloadTotalSize;
-    qint64 downloadByteReceived = 0;
-    QString downloadFilename;
-    QFile* downloadNewFile;
-    QByteArray downloadInBlock;
+    qint64 byteReceived = 0;
+    QString filename;
+    QFile* newFile;
+    QByteArray inBlock;
 
-//    UploadProtocol* uploadFile;
+signals:
+    void clickedFileList(QListWidgetItem*);
+
+private slots:
+    void disconnectServer();
+    void connectPushButton();
+    void receiveData();
+    void sendData();
+    void sendFile();
+    void goOnSend(qint64);
+    void downloadFile();
+
 };
 
 #endif // CHATROOMFORM_H

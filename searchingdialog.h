@@ -31,7 +31,7 @@ signals:
     void returnProduct(QList<QString>);
 
 public slots:
-    void displayRow(QList<QString>);    // 다이얼로그 테이블에 데이터를 표시하기 위한 슬롯 함수
+    void displayTableRow(QList<QString>);    // 다이얼로그 테이블에 데이터를 표시하기 위한 슬롯 함수
     void returnSearching(int, int); // 테이블위젯에서 orderForm으로 데이터를 보내기 위한 슬롯 함수
 
 };

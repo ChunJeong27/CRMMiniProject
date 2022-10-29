@@ -20,7 +20,7 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     ui->sentPushButton->setDisabled(true);
     ui->uploadPushButton->setDisabled(true);
 
-    connect(ui->statusPushButton, SIGNAL(clicked()), this, SLOT(connectPushButton()));
+    connect(ui->actionPushButton, SIGNAL(clicked()), this, SLOT(connectPushButton()));
     connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendData()));
     connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendData()));
 
@@ -35,10 +35,6 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     uploadSocket = new QTcpSocket(this);
     connect(uploadSocket, SIGNAL(bytesWritten(qint64)), SLOT(goOnSend(qint64)));
 
-    uploadProgressDialog = new QProgressDialog(0);
-    uploadProgressDialog->setAutoClose(true);
-    uploadProgressDialog->reset();
-
 
 //    uploadFile = new UploadProtocol(false, nullptr, ui->ipLineEdit->text(), ui->portLineEdit->text().toUInt(), this);
 //    connect(ui->uploadPushButton, SIGNAL(clicked()), uploadFile, SLOT(sendFile()));
@@ -46,17 +42,17 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     connect(ui->fileListWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SIGNAL(clickedFileList(QListWidgetItem*)));
 
     downloadTotalSize = 0;
-    downloadByteReceived = 0;
+    byteReceived = 0;
 
-    downloadFileClient = new QTcpSocket(this);
+    downloadSocket = new QTcpSocket(this);
 
-    downloadFileClient->connectToHost(ui->ipLineEdit->text( ),
+    downloadSocket->connectToHost(ui->ipLineEdit->text( ),
                                       ui->portLineEdit->text( ).toInt( ) + 200);
-    connect(downloadFileClient, SIGNAL(readyRead()), this, SLOT(downloadFile()));
+    connect(downloadSocket, SIGNAL(readyRead()), this, SLOT(downloadFile()));
 
-    downloadProgressDialog = new QProgressDialog(0);
-    downloadProgressDialog->setAutoClose(true);
-    downloadProgressDialog->reset();
+    progressDialog = new QProgressDialog(0);
+    progressDialog->setAutoClose(true);
+    progressDialog->reset();
 
     setWindowTitle(tr("Client Chatting Application"));
 
@@ -66,7 +62,7 @@ ChatRoomForm::~ChatRoomForm()
 {
     chatSocket->close();
     uploadSocket->close();
-    downloadFileClient->close();
+    downloadSocket->close();
 
     delete ui;
 }
@@ -95,7 +91,7 @@ void ChatRoomForm::disconnectServer( )
     ui->idLineEdit->setDisabled(true);
     ui->nameLineEdit->setDisabled(true);
 
-    ui->statusPushButton->setText(tr("Connect"));
+    ui->actionPushButton->setText(tr("Connect"));
 }
 
 /* 프로토콜과 데이터를 매개변수로 서버에 소켓을 전송하는 함수 */
@@ -113,12 +109,12 @@ void ChatRoomForm::writeSocket(char type, QByteArray message)
 void ChatRoomForm::connectPushButton()
 {
     QString name = ui->nameLineEdit->text();
-    QString buttonText = ui->statusPushButton->text();
+    QString buttonText = ui->actionPushButton->text();
 
     if( "Connect" == buttonText ) {
         if(name.length()){
             chatSocket->connectToHost(ui->ipLineEdit->text(), ui->portLineEdit->text().toInt());
-            ui->statusPushButton->setText("Enter");
+            ui->actionPushButton->setText("Enter");
         }
     } else if( "Enter" == buttonText ) {
         ui->messageLineEdit->setEnabled(true);
@@ -131,7 +127,7 @@ void ChatRoomForm::connectPushButton()
 //        ui->chattingTextEdit->append("Enter the chat room");
 
         chatSocket->write(Chat::Enter + name.toUtf8());
-        ui->statusPushButton->setText("Leave");
+        ui->actionPushButton->setText("Leave");
     } else if( "Leave" == buttonText){
         ui->messageLineEdit->setDisabled(true);
         ui->sentPushButton->setDisabled(true);
@@ -143,7 +139,7 @@ void ChatRoomForm::connectPushButton()
         ui->chattingTextEdit->append("Chat Room Ended.");
 
         chatSocket->write(Chat::Leave + name.toUtf8());
-        ui->statusPushButton->setText("Enter");
+        ui->actionPushButton->setText("Enter");
     }
 
 }
@@ -207,14 +203,14 @@ void ChatRoomForm::receiveData()
         ui->portLineEdit->setDisabled(true);
         ui->idLineEdit->setDisabled(true);
         ui->nameLineEdit->setDisabled(true);
-        ui->statusPushButton->setText("Leave"); // 다음 동작을 나타내는 텍스트로 변경
+        ui->actionPushButton->setText("Leave"); // 다음 동작을 나타내는 텍스트로 변경
 //        ui->chattingTextEdit->append("Invited to chat room by server.");
 
         writeSocket(Chat::Invite, "Invited " + name.toUtf8());
         // 동작을 마친 후 로그 기록을 위한 메시지를 서버로 전송
     } break;
 
-    case Chat::Banish:  // 강퇴 프로토콜에 대한 클라이언트 동작
+    case Chat::KickOut:  // 강퇴 프로토콜에 대한 클라이언트 동작
     {
         ui->messageLineEdit->setDisabled(true); // 메시지 입력 라인에디터 비활성화
         ui->sentPushButton->setDisabled(true);  // 보내기 버튼 비활성화
@@ -223,15 +219,15 @@ void ChatRoomForm::receiveData()
         ui->portLineEdit->setEnabled(true);
         ui->idLineEdit->setEnabled(true);
         ui->nameLineEdit->setEnabled(true);
-        ui->statusPushButton->setText("Enter"); // 다음 동작을 나타내는 텍스트로 변경
+        ui->actionPushButton->setText("Enter"); // 다음 동작을 나타내는 텍스트로 변경
         ui->chattingTextEdit->append("Terminated in chat rooms from the server.");
 
-        writeSocket(Chat::Banish, "Kicked out " + name.toUtf8());
+        writeSocket(Chat::KickOut, "Kicked out " + name.toUtf8());
         // 동작을 마친 후 로그 기록을 위한 메시지를 서버로 전송
     } break;
 
 //    case Chat::Disconnect:  // 연결 해제에 대한 클라이언트 동작
-//        ui->statusPushButton->setText("Connect");   //
+//        ui->actionPushButton->setText("Connect");   //
 //        break;
 
     case Chat::ClientList:  // 클라이언트 리스트 갱신 프로토콜에 대한 동작
@@ -289,7 +285,7 @@ void ChatRoomForm::sendFile()   // 파일을 열고 경로를 포함한 파일 �
     file->open(QFile::ReadOnly);    // 파일을 읽기 전용으로 열기
 
     qDebug() << QString("file %1 is opened").arg(filename);
-    uploadProgressDialog->setValue(0);  // 첫 전송은 데이터를 보내지 않음으로 0으로 초기화
+    progressDialog->setValue(0);  // 첫 전송은 데이터를 보내지 않음으로 0으로 초기화
 
     if (!isSent) {  // 첫 번째 전송에서 서버와 연결하고 시그널을 발생시킴
         uploadSocket->connectToHost(ui->ipLineEdit->text( ),
@@ -314,11 +310,11 @@ void ChatRoomForm::sendFile()   // 파일을 열고 경로를 포함한 파일 �
 
     uploadSocket->write(outBlock);  // 읽어온 파일을 서버로 전송
 
-    uploadProgressDialog->setMaximum(totalSize);
+    progressDialog->setMaximum(totalSize);
     // 총 파일 크기를 다이얼로그의 최대 크기로 설정
-    uploadProgressDialog->setValue(totalSize - byteToWrite);
+    progressDialog->setValue(totalSize - byteToWrite);
     // 총 크기 - 기록한 바이트 수로 남은 진행 상황을 다이얼로그로 표시
-    uploadProgressDialog->show();   // 다이얼로그를 화면에 표시
+    progressDialog->show();   // 다이얼로그를 화면에 표시
 
     qDebug() << QString("Sending file %1").arg(filename);
 }
@@ -331,12 +327,12 @@ void ChatRoomForm::goOnSend(qint64 numBytes)
     // 기록할 남은 바이트와 이전에 기록한 바이트 수 중 더 적은 값으로 파일에서 전송할 데이터를 읽어옴
     uploadSocket->write(outBlock);  // 파일에서 읽어온 데이터를 서버로 전송
     // 다이얼로그에 총 파일 크기와 전송한 파일 크기를 설정
-    uploadProgressDialog->setMaximum(totalSize);
-    uploadProgressDialog->setValue(totalSize - byteToWrite);
+    progressDialog->setMaximum(totalSize);
+    progressDialog->setValue(totalSize - byteToWrite);
 
     if (byteToWrite == 0) { // 기록할 바이트가 0이면 파일 전송 완료
         qDebug("File sending completed!");
-        uploadProgressDialog->reset();  // 전송을 완료했으므로 다이얼로그 초기화
+        progressDialog->reset();  // 전송을 완료했으므로 다이얼로그 초기화
     }
 }
 
@@ -350,54 +346,54 @@ void ChatRoomForm::downloadFile()
 //    QString ip = socket->peerAddress().toString();
 //    QString fileName;   // 파일이름을 저장할 지역변수 선언
 
-    if(downloadByteReceived == 0) {
+    if(byteReceived == 0) {
         // 데이터를 처음 받을 때 총 파일의 크기, 받은 파일의 크기, 파일의 정보를 가져옴
-        downloadProgressDialog->reset();    // 화면에 표시할 다이얼로그를 초기화
-        downloadProgressDialog->show(); // 다이얼로그 출력
+        progressDialog->reset();    // 화면에 표시할 다이얼로그를 초기화
+        progressDialog->show(); // 다이얼로그 출력
 
         QDataStream in(socket); // 소켓을 데이터 스트림으로 사용
-        in >> downloadTotalSize >> downloadByteReceived >> downloadFilename;
+        in >> downloadTotalSize >> byteReceived >> filename;
         // 3개의 변수에 차례대로 데이터를 저장
-        downloadProgressDialog->setMaximum(downloadTotalSize);
+        progressDialog->setMaximum(downloadTotalSize);
         // 파일의 총 크기를 다이얼로그 최대값으로 설정
-        QFileInfo info(downloadFilename);   // 경로를 포함한 파일이름으로 파일 정보를 가져옴
+        QFileInfo info(filename);   // 경로를 포함한 파일이름으로 파일 정보를 가져옴
         QString currentFileName = info.fileName();  // 파일 정보에서 이름만 문자열로 저장
         qDebug() << currentFileName;
 
-        downloadNewFile = new QFile("client/" + currentFileName);
+        newFile = new QFile("client/" + currentFileName);
         // client 폴더에 파일을 저장하기 위해 QFile 객체로 동적 할당
-//        downloadNewFile = new QFile(currentFileName);
-        downloadNewFile->open(QIODevice::WriteOnly);    // 다운로드할 파일을 쓰기 전용으로 열기
+//        newFile = new QFile(currentFileName);
+        newFile->open(QIODevice::WriteOnly);    // 다운로드할 파일을 쓰기 전용으로 열기
 
     } else {
         qDebug("read?");
-        downloadInBlock = socket->readAll();    // 소켓의 모든 데이터를 읽어옴
+        inBlock = socket->readAll();    // 소켓의 모든 데이터를 읽어옴
 
-        downloadByteReceived += downloadInBlock.size();
+        byteReceived += inBlock.size();
         // 읽어온 데이터 크기만큼 받은 데이터를 추가
-        downloadNewFile->write(downloadInBlock);    // 읽어온 데이터를 파일에 기록
-        downloadNewFile->flush();   // 파일에 남은 데이터를 해제
+        newFile->write(inBlock);    // 읽어온 데이터를 파일에 기록
+        newFile->flush();   // 파일에 남은 데이터를 해제
     }
 
-    downloadProgressDialog->setValue(downloadByteReceived);
+    progressDialog->setValue(byteReceived);
     // 데이터를 받은 만큼 다이얼로그에 값으로 설정
 
-    if(downloadByteReceived == downloadTotalSize){
+    if(byteReceived == downloadTotalSize){
         qDebug() << QString("%1 receive completed")/*.arg(filename)*/;
 //        ui->textEdit->append(tr("%1 receive completed").arg(filename));
 
-        QFileInfo info(downloadFilename);
+        QFileInfo info(filename);
         QString currentFileName = info.fileName();
 
         writeSocket(Chat::FileDownload, currentFileName.toUtf8());
 
-        downloadInBlock.clear();
-        downloadByteReceived = 0;
+        inBlock.clear();
+        byteReceived = 0;
         downloadTotalSize = 0;
-        downloadProgressDialog->reset();
-        downloadProgressDialog->hide();
-        downloadNewFile->close();
+        progressDialog->reset();
+        progressDialog->hide();
+        newFile->close();
 
-        delete downloadNewFile;
+        delete newFile;
     }
 }
