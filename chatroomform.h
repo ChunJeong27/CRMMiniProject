@@ -69,7 +69,7 @@ private slots:
     void disconnectServer();
     void connectPushButton();
     void receiveData();
-    void sendData();
+    void sendMessage();
     void sendFile();
     void goOnSend(qint64);
     void downloadFile();

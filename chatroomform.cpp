@@ -21,8 +21,8 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     ui->uploadPushButton->setDisabled(true);
 
     connect(ui->actionPushButton, SIGNAL(clicked()), this, SLOT(connectPushButton()));
-    connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendData()));
-    connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendData()));
+    connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendMessage()));
+    connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendMessage()));
 
     chatSocket = new QTcpSocket(this);
     connect(chatSocket, &QAbstractSocket::errorOccurred, this,
@@ -35,9 +35,6 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     uploadSocket = new QTcpSocket(this);
     connect(uploadSocket, SIGNAL(bytesWritten(qint64)), SLOT(goOnSend(qint64)));
 
-
-//    uploadFile = new UploadProtocol(false, nullptr, ui->ipLineEdit->text(), ui->portLineEdit->text().toUInt(), this);
-//    connect(ui->uploadPushButton, SIGNAL(clicked()), uploadFile, SLOT(sendFile()));
 
     connect(ui->fileListWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SIGNAL(clickedFileList(QListWidgetItem*)));
 
@@ -81,15 +78,10 @@ void ChatRoomForm::closeEvent(QCloseEvent*)
 void ChatRoomForm::disconnectServer( )
 {
     qDebug() << "disconnect";
-    QMessageBox::critical(this, tr("Chatting Client"),
-                          tr("Disconnect from Server"));
     ui->messageLineEdit->setDisabled(true);
     ui->sentPushButton->setDisabled(true);
     ui->uploadPushButton->setDisabled(true);
-    ui->ipLineEdit->setDisabled(true);
-    ui->portLineEdit->setDisabled(true);
-    ui->idLineEdit->setDisabled(true);
-    ui->nameLineEdit->setDisabled(true);
+
 
     ui->actionPushButton->setText(tr("Connect"));
 }
@@ -124,7 +116,6 @@ void ChatRoomForm::connectPushButton()
         ui->portLineEdit->setDisabled(true);
         ui->idLineEdit->setDisabled(true);
         ui->nameLineEdit->setDisabled(true);
-//        ui->chattingTextEdit->append("Enter the chat room");
 
         chatSocket->write(Chat::Enter + name.toUtf8());
         ui->actionPushButton->setText("Leave");
@@ -223,13 +214,9 @@ void ChatRoomForm::receiveData()
         ui->actionPushButton->setText("Enter"); // 다음 동작을 나타내는 텍스트로 변경
         ui->chattingTextEdit->append("Terminated in chat rooms from the server.");
 
-        writeSocket(Chat::KickOut, "Kicked out " + name.toUtf8());
+        writeSocket(Chat::KickOut, name.toUtf8());
         // 동작을 마친 후 로그 기록을 위한 메시지를 서버로 전송
     } break;
-
-//    case Chat::Disconnect:  // 연결 해제에 대한 클라이언트 동작
-//        ui->actionPushButton->setText("Connect");   //
-//        break;
 
     case Chat::ClientList:  // 클라이언트 리스트 갱신 프로토콜에 대한 동작
     {
@@ -261,13 +248,15 @@ void ChatRoomForm::receiveData()
 }
 
 /* 버튼 시그널이 발생했을 때 서버에 메시지를 보내는 슬롯 함수 */
-void ChatRoomForm::sendData()
+void ChatRoomForm::sendMessage()
 {
     QString message = ui->messageLineEdit->text();  // 라인에디터로부터 메시지를 변수로 선언
     ui->messageLineEdit->clear();   // 메시지를 복사한 라인에디터를 초기화
 
     if(message.length()){   // 메시지가 존재하면 조건문을 실행
-        chatSocket->write(Chat::Message + message.toUtf8());    // 메시지를 서버로 전송
+        chatSocket->write(Chat::Message
+                          + (ui->nameLineEdit->text()
+                             + " : " + message).toUtf8());  // 메시지를 서버로 전송
         ui->chattingTextEdit->append("Me : " + message);
         // 클라이언트의 채팅방에도 동일한 메시지를 출력
     }
@@ -344,8 +333,6 @@ void ChatRoomForm::downloadFile()
 
     QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
     // 데이터를 보낸 소켓을 변수로 선언
-//    QString ip = socket->peerAddress().toString();
-//    QString fileName;   // 파일이름을 저장할 지역변수 선언
 
     if(byteReceived == 0) {
         // 데이터를 처음 받을 때 총 파일의 크기, 받은 파일의 크기, 파일의 정보를 가져옴
@@ -363,7 +350,6 @@ void ChatRoomForm::downloadFile()
 
         newFile = new QFile("client/" + currentFileName);
         // client 폴더에 파일을 저장하기 위해 QFile 객체로 동적 할당
-//        newFile = new QFile(currentFileName);
         newFile->open(QIODevice::WriteOnly);    // 다운로드할 파일을 쓰기 전용으로 열기
 
     } else {
@@ -380,8 +366,7 @@ void ChatRoomForm::downloadFile()
     // 데이터를 받은 만큼 다이얼로그에 값으로 설정
 
     if(byteReceived == downloadTotalSize){
-        qDebug() << QString("%1 receive completed")/*.arg(filename)*/;
-//        ui->textEdit->append(tr("%1 receive completed").arg(filename));
+        qDebug() << QString("%1 receive completed").arg(filename);
 
         QFileInfo info(filename);
         QString currentFileName = info.fileName();

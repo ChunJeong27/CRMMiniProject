@@ -28,6 +28,8 @@ private:
 
 private:
     void writeSocket(QTcpSocket*, char, QByteArray);
+    void sendActivatedChatRoom(char, QByteArray);
+    void sendMessage(QTcpSocket*, QByteArray);
 
     const int BLOCK_SIZE = 1024;
     QTcpServer* tcpServer;

@@ -11,27 +11,23 @@ CONFIG += c++17
 SOURCES += \
     chatroomform.cpp \
     clientform.cpp \
-    fileprotocol.cpp \
     logthread.cpp \
     main.cpp \
     mainwindow.cpp \
     orderform.cpp \
     productform.cpp \
     searchingdialog.cpp \
-    serverform.cpp \
-    uploadprotocol.cpp
+    serverform.cpp
 
 HEADERS += \
     chatroomform.h \
     clientform.h \
-    fileprotocol.h \
     logthread.h \
     mainwindow.h \
     orderform.h \
     productform.h \
     searchingdialog.h \
-    serverform.h \
-    uploadprotocol.h
+    serverform.h
 
 FORMS += \
     chatroomform.ui \
