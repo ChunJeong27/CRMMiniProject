@@ -66,8 +66,8 @@ SearchingDialog::SearchingDialog(QWidget *parent) :
     // 다이얼로그 테이블위젯의 셀을 클릭하면 행의 값들을 orderForm으로 전달하는 기능
 //    connect(ui->clientTableWidget, SIGNAL(cellClicked(int,int)),
 //            this, SLOT(returnSearching(int,int)));
-    connect(ui->productTableWidget, SIGNAL(cellClicked(int,int)),
-            this, SLOT(returnSearching(int,int)));
+//    connect(ui->productTableWidget, SIGNAL(cellClicked(int,int)),
+//            this, SLOT(returnSearching(int,int)));
 
 }
 
@@ -103,26 +103,26 @@ void SearchingDialog::displayTableRow(QList<QString> result)
 //                              new QTableWidgetItem(result.takeFirst()));
         }
     } else if( "ProductForm" == form->objectName() ){   // 상품 관리에서 보낸 데이터일 경우
-        ui->productTableWidget->setRowCount(0);
-        // 첫 행부터 데이터를 저장하기 위해 행 수를 0으로 설정
-        while ( !result.isEmpty() ) {   // 데이터가 없을 경우 반복문을 수행하지 않음
-            int tableRowCount = ui->productTableWidget->rowCount();
-            ui->productTableWidget->setRowCount(tableRowCount + 1);
-            // 현재 행 수에서 1을 증가시킨 후 행 수를 설정
-            // 리스트의 가장 앞의 값을 아이템으로 선언하고 테이블위젯에 저장
-            ui->productTableWidget
-                    ->setItem(tableRowCount, 0,
-                              new QTableWidgetItem(result.takeFirst()));
-            ui->productTableWidget
-                    ->setItem(tableRowCount, 1,
-                              new QTableWidgetItem(result.takeFirst()));
-            ui->productTableWidget
-                    ->setItem(tableRowCount, 2,
-                              new QTableWidgetItem(result.takeFirst()));
-            ui->productTableWidget
-                    ->setItem(tableRowCount, 3,
-                              new QTableWidgetItem(result.takeFirst()));
-        }
+//        ui->productTableWidget->setRowCount(0);
+//        // 첫 행부터 데이터를 저장하기 위해 행 수를 0으로 설정
+//        while ( !result.isEmpty() ) {   // 데이터가 없을 경우 반복문을 수행하지 않음
+//            int tableRowCount = ui->productTableWidget->rowCount();
+//            ui->productTableWidget->setRowCount(tableRowCount + 1);
+//            // 현재 행 수에서 1을 증가시킨 후 행 수를 설정
+//            // 리스트의 가장 앞의 값을 아이템으로 선언하고 테이블위젯에 저장
+//            ui->productTableWidget
+//                    ->setItem(tableRowCount, 0,
+//                              new QTableWidgetItem(result.takeFirst()));
+//            ui->productTableWidget
+//                    ->setItem(tableRowCount, 1,
+//                              new QTableWidgetItem(result.takeFirst()));
+//            ui->productTableWidget
+//                    ->setItem(tableRowCount, 2,
+//                              new QTableWidgetItem(result.takeFirst()));
+//            ui->productTableWidget
+//                    ->setItem(tableRowCount, 3,
+//                              new QTableWidgetItem(result.takeFirst()));
+//        }
     }
 }
 
@@ -131,22 +131,22 @@ void SearchingDialog::returnSearching(int row, int column)
 {
     Q_UNUSED(column);   // 사용하지 않는 열 변수를 명시적으로 표시
 
-    QTableWidget* tableWidget = qobject_cast<QTableWidget*>(sender());
+//    QTableWidget* tableWidget = qobject_cast<QTableWidget*>(sender());
     // 데이터를 구분하기 위해 시그널을 발생시킨 테이블위젯 객체를 변수에 저장
 
-    QList<QString> result;  // 데이터를 저장하고 내보낼 리스트 변수 선언
-    // 테이블의 행 데이터를 순서대로 리스트에 저장
-    result << tableWidget->item(row, 0)->text()
-           << tableWidget->item(row, 1)->text()
-           << tableWidget->item(row, 2)->text()
-           << tableWidget->item(row, 3)->text();
+//    QList<QString> result;  // 데이터를 저장하고 내보낼 리스트 변수 선언
+//    // 테이블의 행 데이터를 순서대로 리스트에 저장
+//    result << tableWidget->item(row, 0)->text()
+//           << tableWidget->item(row, 1)->text()
+//           << tableWidget->item(row, 2)->text()
+//           << tableWidget->item(row, 3)->text();
 
-    QString objectName = tableWidget->objectName();
-    // 시그널을 보낸 테이블위젯의 이름을 문자열로 저장
-    // 테이블에 맞는 시그널을 방출
-    if("clientTableWidget" == objectName)
-        emit returnClient(result);  // 데이터를 저장한 리스트와 함께 시그널 방출
-    else if("productTableWidget" == objectName){
-        emit returnProduct(result);
-    }
+//    QString objectName = tableWidget->objectName();
+//    // 시그널을 보낸 테이블위젯의 이름을 문자열로 저장
+//    // 테이블에 맞는 시그널을 방출
+//    if("clientTableWidget" == objectName)
+//        emit returnClient(result);  // 데이터를 저장한 리스트와 함께 시그널 방출
+//    else if("productTableWidget" == objectName){
+//        emit returnProduct(result);
+//    }
 }
