@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QTableWidgetItem;
+class QSqlQueryModel;
 
 namespace Ui {
 class ClientForm;
@@ -27,6 +28,8 @@ public:
 
 private:
     QList<QTableWidgetItem*> searchingList; // 검색결과를 임시로 저장하는 리스트
+
+    QSqlQueryModel* clientQueryModel;
 
 signals:
     void returnSearching(QList<QString>);   // 검색결과를 반환하는 시그널

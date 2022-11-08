@@ -9,6 +9,8 @@ class OrderForm;
 class ServerForm;
 class ChattingForm;
 
+class QSqlQueryModel;
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -29,6 +31,8 @@ private:
     ProductForm* productForm;
     OrderForm* orderForm;
     ServerForm* serverForm;
+
+    bool createConnection();
 
 signals:
     void triggeredClientAction(QWidget*);

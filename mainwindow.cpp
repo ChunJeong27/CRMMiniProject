@@ -1,6 +1,12 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QTableView>
+#include <QSqlQueryModel>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+
 #include "clientform.h"
 #include "productform.h"
 #include "orderform.h"
@@ -14,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->toolBar->setHidden(true);
+
+    if (!createConnection()) return;
 
     clientForm = new ClientForm;
     ui->tabWidget->addTab(clientForm, "Client Manager");
@@ -133,4 +141,19 @@ void MainWindow::createChatRoom()
     ChatRoomForm* chatRoomForm = new ChatRoomForm;
     connect(chatRoomForm, SIGNAL(clickedFileList(QListWidgetItem*)), serverForm, SLOT(sendFile(QListWidgetItem*)));
     chatRoomForm->show();
+}
+
+bool MainWindow::createConnection()
+{
+    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
+    db.setDatabaseName("Oracle11gx64");
+    db.setUserName("EJH");
+    db.setPassword("1203");
+    if (!db.open()) {
+        qDebug() << db.lastError().text();
+    } else {
+        qDebug("success");
+    }
+
+    return true;
 }

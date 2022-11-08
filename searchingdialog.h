@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+class QSqlQueryModel;
+
 namespace Ui {
 class SearchingDialog;
 }
@@ -21,6 +23,9 @@ private:
 
 protected:
 //    void closeEvent(QCloseEvent*) override;
+
+private:
+    QSqlQueryModel* clientQueryModel;
 
 signals:
     // 다이얼로그에서 검색했음을 알려주는 시그널
