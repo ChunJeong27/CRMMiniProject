@@ -30,58 +30,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget">
-     <column>
-      <property name="text">
-       <string>ID</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Client ID</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Product ID</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Client Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Phone Number</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Address</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Product Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Price</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Quantity</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Amount</string>
-      </property>
-     </column>
-    </widget>
+    <widget class="QTableView" name="tableView"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">

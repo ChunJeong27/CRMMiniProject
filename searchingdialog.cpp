@@ -20,6 +20,7 @@ SearchingDialog::SearchingDialog(QWidget *parent) :
     ui->productComboBox->addItem("Stock");
 
     clientQueryModel = new QSqlQueryModel;
+    productQueryModel = new QSqlQueryModel;
 
     // 고객 검색 버튼이 눌렸을 때 고객검색 시그널을 방출시키는 람다 함수와 연결
     connect(ui->clientPushButton, &QPushButton::clicked, this, [=](){
@@ -47,27 +48,32 @@ SearchingDialog::SearchingDialog(QWidget *parent) :
         ui->clientTableView->setModel(clientQueryModel);
     });
 
-
     // 상품 검색 버튼이 눌렸을 때 상품검색 시그널을 방출시키는 람다 함수와 연결
     connect(ui->productPushButton, &QPushButton::clicked, this, [=](){
         QString comboBoxText(ui->productComboBox->currentText());
         // 콤보박스의 항목 값을 문자열로 선언
         if( "ID" == comboBoxText ){ // ID 열 번호 0
-            emit searchedProduct(0, ui->productLineEdit->text());
+            QString id = ui->productLineEdit->text();
+            productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRODUCT_ID = %1").arg(id));
         } else if( "Name" == comboBoxText ){    // 이름의 열 번호 1
-            emit searchedProduct(1, ui->productLineEdit->text());
+            QString name = ui->productLineEdit->text();
+            productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRODUCT_NAME = '%1'").arg(name));
         } else if( "Price" == comboBoxText ){   // 가격의 열 번호 2
-            emit searchedProduct(2, ui->productLineEdit->text());
+            QString price = ui->productLineEdit->text();
+            productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRICE = '%1'").arg(price));
         } else if( "Stock" == comboBoxText ){   // 재고의 열 번호 3
-            emit searchedProduct(3, ui->productLineEdit->text());
+            QString stock = ui->productLineEdit->text();
+            productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE STOCK = '%1'").arg(stock));
         } else {
             return;
-        }});
+        }
+        ui->productTableView->setModel(productQueryModel);
+    });
     // 다이얼로그 테이블위젯의 셀을 클릭하면 행의 값들을 orderForm으로 전달하는 기능
-//    connect(ui->clientTableWidget, SIGNAL(cellClicked(int,int)),
-//            this, SLOT(returnSearching(int,int)));
-//    connect(ui->productTableWidget, SIGNAL(cellClicked(int,int)),
-//            this, SLOT(returnSearching(int,int)));
+    connect(ui->clientTableView, SIGNAL(clicked(QModelIndex)),
+            this, SLOT(returnSearching(QModelIndex)));
+    connect(ui->productTableView, SIGNAL(clicked(QModelIndex)),
+            this, SLOT(returnSearching(QModelIndex)));
 
 }
 
@@ -149,4 +155,31 @@ void SearchingDialog::returnSearching(int row, int column)
 //    else if("productTableWidget" == objectName){
 //        emit returnProduct(result);
 //    }
+}
+
+void SearchingDialog::returnSearching(const QModelIndex &index)
+{
+    QTableView* tableView = qobject_cast<QTableView*>(sender());
+
+    QList<QString> result;  // 데이터를 저장하고 내보낼 리스트 변수 선언
+
+    QString objectName = tableView->objectName();
+    // 시그널을 보낸 테이블위젯의 이름을 문자열로 저장
+    // 테이블에 맞는 시그널을 방출
+    if("clientTableView" == objectName){
+        QString id = clientQueryModel->data(clientQueryModel->index(index.row(), 0)).toString();
+        QString name = clientQueryModel->data(clientQueryModel->index(index.row(), 1)).toString();
+        QString phoneNum = clientQueryModel->data(clientQueryModel->index(index.row(), 2)).toString();
+        QString address = clientQueryModel->data(clientQueryModel->index(index.row(), 3)).toString();
+        result << id << name << phoneNum << address;
+        emit returnClient(result);  // 데이터를 저장한 리스트와 함께 시그널 방출
+    } else if("productTableView" == objectName){
+        QString id = productQueryModel->data(productQueryModel->index(index.row(), 0)).toString();
+        QString name = productQueryModel->data(productQueryModel->index(index.row(), 1)).toString();
+        QString price = productQueryModel->data(productQueryModel->index(index.row(), 2)).toString();
+        QString stock = productQueryModel->data(productQueryModel->index(index.row(), 3)).toString();
+        result << id << name << price << stock;
+        emit returnProduct(result);
+    }
+
 }

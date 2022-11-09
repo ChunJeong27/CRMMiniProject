@@ -103,15 +103,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
     connect(ui->action_New_Chat_Room, SIGNAL(triggered(bool)), this, SLOT(createChatRoom()));
 
-    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
+//    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
-    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
+//    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
     connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));
 
-    connect(serverForm, SIGNAL(checkClientId(QString,QString)), clientForm, SLOT(searchIdName(QString,QString)));
+//    connect(serverForm, SIGNAL(checkClientId(QString,QString)), clientForm, SLOT(searchIdName(QString,QString)));
     connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
 
-    orderForm->loadData();
 
 }
 
@@ -125,7 +124,7 @@ void MainWindow::createSeachingDialog()
 {
     SearchingDialog* searchingDialog = new SearchingDialog(orderForm);
 
-    connect(searchingDialog, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
+//    connect(searchingDialog, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
     connect(clientForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
     connect(searchingDialog, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
     connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
