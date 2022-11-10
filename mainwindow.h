@@ -32,8 +32,6 @@ private:
     OrderForm* orderForm;
     ServerForm* serverForm;
 
-    bool createConnection();
-
 signals:
     void triggeredClientAction(QWidget*);
     void triggeredProductAction(QWidget*);

@@ -1,15 +1,10 @@
 #include "clientform.h"
 #include "ui_clientform.h"
 
-#include <QFile>
 #include <QMessageBox>
-#include <QTableView>
 #include <QSqlQueryModel>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
 
-/* 생성자에서 ui에 대한 슬롯을 연결하고 저장한 csv데이터를 불러옴 */
+/* 생성자에서 ui에 대한 슬롯을 연결하고 DB Model을 생성하고 테이블 뷰와 연결 */
 ClientForm::ClientForm(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ClientForm)
@@ -17,7 +12,8 @@ ClientForm::ClientForm(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->tableView, SIGNAL(clicked(QModelIndex)),this,
-            SLOT(displayLineEdit(QModelIndex)));    // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
+            SLOT(displayLineEdit(QModelIndex)));
+    // 클릭한 셀의 행 데이터를 라인에디터에 보여주는 기능
     connect(ui->clearPushButton, SIGNAL(clicked()),
             this, SLOT(clearLineEdit()));   // 모든 라인에디터를 초기하는 기능
     connect(ui->addPushButton, SIGNAL(clicked()), this, SLOT(addTableRow()));
@@ -40,18 +36,18 @@ ClientForm::ClientForm(QWidget *parent) :
     connect(ui->addressLineEdit, SIGNAL(returnPressed()),
             this, SLOT(selectReturnPressedLineEdit()));
 
-    clientQueryModel = new QSqlQueryModel;
-    clientQueryModel->setQuery("SELECT * FROM CLIENT");
+    clientQueryModel = new QSqlQueryModel;  // sql 쿼리 모델을 생성
+    clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 모델을 전체 DB로 초기화
+    // 테이블 뷰의 열 이름을 설정
     clientQueryModel->setHeaderData(0, Qt::Horizontal, tr("ID"));
     clientQueryModel->setHeaderData(1, Qt::Horizontal, tr("Name"));
     clientQueryModel->setHeaderData(2, Qt::Horizontal, tr("Phone Number"));
     clientQueryModel->setHeaderData(3, Qt::Horizontal, tr("Address"));
 
-    ui->tableView->setModel(clientQueryModel);
-
+    ui->tableView->setModel(clientQueryModel);  // 테이블 뷰 위젯에 모델을 설정
 }
 
-/* 기록한 데이터를 소멸자에서 저장 */
+/* 사용한 객체를 삭제하는 소멸자 */
 ClientForm::~ClientForm()
 {
     delete ui;  // 소멸자이므로 사용한 ui 객체를 메모리 해제
@@ -60,17 +56,21 @@ ClientForm::~ClientForm()
 /* 행의 값을 통해 선택된 행의 데이터를 라인에디터에 표시하는 슬롯함수 */
 void ClientForm::displayLineEdit(const QModelIndex &index)
 {
-    // 시그널에서 받아온 행의 값으로 테이블위젯의 값을 가져온 후 라인에디터에 저장
-    QString id = clientQueryModel->data(clientQueryModel->index(index.row(), 0)).toString();
-    QString name = clientQueryModel->data(clientQueryModel->index(index.row(), 1)).toString();
-    QString phoneNum = clientQueryModel->data(clientQueryModel->index(index.row(), 2)).toString();
-    QString address = clientQueryModel->data(clientQueryModel->index(index.row(), 3)).toString();
-
+    // 시그널에서 받아온 인덱스 값으로 테이블 뷰의 값을 가져온 후 라인에디터에 저장
+    // 각 문자열 변수에 테이블 뷰의 값을 저장
+    QString id = clientQueryModel
+            ->data(clientQueryModel->index(index.row(), 0)).toString();
+    QString name = clientQueryModel
+            ->data(clientQueryModel->index(index.row(), 1)).toString();
+    QString phoneNum = clientQueryModel
+            ->data(clientQueryModel->index(index.row(), 2)).toString();
+    QString address = clientQueryModel
+            ->data(clientQueryModel->index(index.row(), 3)).toString();
+    // 각 문자열을 라인에디터에 저장
     ui->idLineEdit->setText(id);
     ui->nameLineEdit->setText(name);
     ui->phoneNumLineEdit->setText(phoneNum);
     ui->addressLineEdit->setText(address);
-
 }
 
 /* 클리어 버튼이 눌렸을 때 모든 라인에디터를 클리어하는 슬롯함수 */
@@ -81,12 +81,11 @@ void ClientForm::clearLineEdit()
     ui->nameLineEdit->clear();
     ui->phoneNumLineEdit->clear();
     ui->addressLineEdit->clear();
-
+    // 초기화면 출력인 전체 DB를 출력
     clientQueryModel->setQuery("SELECT * FROM CLIENT");
-    ui->tableView->setModel(clientQueryModel);
 }
 
-/* 라인에디터의 값들을 테이블위젯의 마지막 행에 추가하는 슬롯 함수 */
+/* 라인에디터의 값들을 DB에 추가하는 슬롯 함수 */
 void ClientForm::addTableRow()
 {
     // 라인 에디터의 값들을 문자열 변수에 저장
@@ -108,50 +107,71 @@ void ClientForm::addTableRow()
         return;     // 경고메시지를 출력 후 함수 종료
     }
     else {      // 모든 라인에디터에 정상적으로 값이 있을 경우
-        clientQueryModel->setQuery(QString("CALL INSERT_CLIENT('%1', '%2', '%3')")
-                                   .arg(name).arg(phoneNum).arg(address));
-        clientQueryModel->setQuery("SELECT * FROM CLIENT");
-        ui->tableView->setModel(clientQueryModel);
-
+        // DB 추가 명령을 문자열로 저장
+        QString instruction = QString("CALL INSERT_CLIENT('%1', '%2', '%3')")
+                .arg(name).arg(phoneNum).arg(address);
+        clientQueryModel->setQuery(instruction);    // 쿼리문 실행
+        clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기 화면인 전체 DB 출력
     }
 }
 
-/* ID를 통해 검색하고 행을 활성화하는 슬롯 함수 */
+/* ID를 통해 검색하고 뷰에 출력하는 슬롯 함수 */
 void ClientForm::selectReturnPressedId()
 {
-    QString id = ui->idLineEdit->text();
-    clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1").arg(id));
-    QString name = clientQueryModel->data(clientQueryModel->index(0, 1)).toString();
-    ui->nameLineEdit->setText(name);
-    ui->tableView->setModel(clientQueryModel);
+    QString id = ui->idLineEdit->text();    // 검색 내용인 ID를 문자열로 저장
+    // 모델에 ID 검색을 쿼리문으로 실행
+    clientQueryModel->setQuery(
+                QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1").arg(id));
+//    QString name = clientQueryModel
+//            ->data(clientQueryModel->index(0, 1)).toString();
+//    QString phoneNum = clientQueryModel
+//            ->data(clientQueryModel->index(0, 2)).toString();
+//    QString address = clientQueryModel
+//            ->data(clientQueryModel->index(0, 3)).toString();
+//    ui->nameLineEdit->setText(name);
+//    ui->phoneNumLineEdit->setText(phoneNum);
+//    ui->addressLineEdit->setText(address);
+    ui->idLineEdit->clear();
+    ui->nameLineEdit->clear();
+    ui->phoneNumLineEdit->clear();
+    ui->addressLineEdit->clear();
 
 }
 
-/* 라인에디터에서 returnPressed 시그널을 발생시켰을 때 검색기능을 수행하기 위한 함수 */
+/* 라인에디터에서 returnPressed 시그널을 발생시켰을 때 검색기능을 수행하는 함수 */
 void ClientForm::selectReturnPressedLineEdit()
 {
     // 신호를 발생시킨 라인에디터를 변수에 저장
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(sender());
     if(lineEdit == nullptr)     return;     // 라인에디터가 존재하지 않을 경우 함수 종료
 
+    QString instruction;
     // 라인에디터의 값이 저장되는 행을 객체 이름을 통해 조건문으로 처리하여 번호를 저장
-    if( lineEdit->objectName() == "nameLineEdit" ){
-        QString name = ui->nameLineEdit->text();
-        clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE CLIENT_NAME = '%1'").arg(name));
-    } else if( lineEdit->objectName() == "phoneNumLineEdit" ){
-        QString phoneNum = ui->phoneNumLineEdit->text();
-        clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE PHONE_NUMBER = '%1'").arg(phoneNum));
-    } else if( lineEdit->objectName() == "addressLineEdit" ){
-        QString address = ui->addressLineEdit->text();
-        clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE ADDRESS = '%1'").arg(address));
+    if( lineEdit->objectName() == "nameLineEdit" ){ // 이름 검색
+        QString name = ui->nameLineEdit->text();    // 검색 내용인 고객 이름을 저장
+        instruction = QString("SELECT * FROM CLIENT WHERE CLIENT_NAME = '%1';")
+                .arg(name); // 이름을 통한 검색 쿼리문을 문자열로 저장
+    } else if( lineEdit->objectName() == "phoneNumLineEdit" ){  // 전화번호 검색
+        QString phoneNum = ui->phoneNumLineEdit->text();    // 검색할 전화번호 저장
+        instruction = QString("SELECT * FROM CLIENT "
+                              "WHERE PHONE_NUMBER = '%1';").arg(phoneNum);
+        // 전화번호를 통한 검색 쿼리문을 문자열로 저장
+    } else if( lineEdit->objectName() == "addressLineEdit" ){   // 주소 검색
+        QString address = ui->addressLineEdit->text();  // 검색할 주소를 저장
+        instruction = QString("SELECT * FROM CLIENT WHERE ADDRESS = '%1';")
+                .arg(address);  // 주소를 통한 검색 쿼리문을 문자열로 저장
     } else {
         return;     // 해당하지 않을 경우 함수를 종료
     }
-    ui->tableView->setModel(clientQueryModel);
-
+    clientQueryModel->setQuery(instruction);    // 조건에 맞게 저장한 쿼리문을 실행
+    // 모든 라인에디터를 초기화
+    ui->idLineEdit->clear();
+    ui->nameLineEdit->clear();
+    ui->phoneNumLineEdit->clear();
+    ui->addressLineEdit->clear();
 }
 
-/* 테이블위젯의 값을 변경하는 슬롯함수 */
+/* DB의 값을 변경하는 슬롯함수 */
 void ClientForm::modifyTableRow()
 {
     // 라인 에디터의 값들을 문자열 변수에 저장
@@ -165,14 +185,14 @@ void ClientForm::modifyTableRow()
     ui->phoneNumLineEdit->clear();
     ui->addressLineEdit->clear();
 
-    clientQueryModel->setQuery(QString("CALL UPDATE_CLIENT(%1, '%2', '%3', '%4')")
-                               .arg(id).arg(name).arg(phoneNum).arg(address));
-    clientQueryModel->setQuery("SELECT * FROM CLIENT");
-    ui->tableView->setModel(clientQueryModel);
-
+    // DB를 변경하는 프로시저를 실행하는 쿼리문을 문자열로 저장
+    QString instruction = QString("CALL UPDATE_CLIENT(%1, '%2', '%3', '%4')")
+            .arg(id).arg(name).arg(phoneNum).arg(address);
+    clientQueryModel->setQuery(instruction);    // DB를 변경하는 쿼리문 실행
+    clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기화인 전체 DB 출력
 }
 
-/* 테이블위젯의 선택된 행을 삭제하는 슬롯함수 */
+/* DB의 특정 행을 삭제하는 슬롯함수 */
 void ClientForm::removeTableRow()
 {
     // 삭제에 관한 내용을 다시 한번 확인하기 위해 메시지박스를 출력
@@ -180,13 +200,48 @@ void ClientForm::removeTableRow()
                             tr("Are you sure you want to delete it?"),
                             QMessageBox::Yes | QMessageBox::No)
             == QMessageBox::Yes){   // Yes를 클릭할 경우 행을 삭제
-        QString id = ui->idLineEdit->text();
-        clientQueryModel->setQuery(QString("CALL DELETE_CLIENT('%1')").arg(id));
+        QString id = ui->idLineEdit->text();    // 삭제할 행의 id를 문자열로 저장
+        clientQueryModel->setQuery(QString("CALL DELETE_CLIENT('%1')")
+                                   .arg(id));   // id를 통해 삭제하는 쿼리문 실행
     }
-    clientQueryModel->setQuery("SELECT * FROM CLIENT");
-    ui->tableView->setModel(clientQueryModel);
+    clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기 화면인 전체 DB를 출력
     clearLineEdit();
-
 }
 
+/* orderForm에서 데이터를 받아 client DB를 검색하고 시그널을 통해 전송하는 함수 */
+void ClientForm::searching(QString columnName, QString searchingText)
+{
+    QString instruction;
+    if( "ID" == columnName ){ // 항목 값에 따라 쿼리문을 문자열로 저장
+        instruction = QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1")
+                .arg(searchingText);    // id로 검색하는 쿼리문
+    } else if( "Name" == columnName ){
+        instruction = QString("SELECT * FROM CLIENT WHERE CLIENT_NAME = '%1'")
+                .arg(searchingText);    // 이름으로 검색하는 쿼리문
+    } else if( "Phone Number" == columnName ){
+        instruction = QString("SELECT * FROM CLIENT WHERE PHONE_NUMBER = '%1'")
+                .arg(searchingText);    // 전화번호로 검색하는 쿼리문
+    } else if( "Address" == columnName ){
+        instruction = QString("SELECT * FROM CLIENT WHERE ADDRESS = '%1'")
+                .arg(searchingText);    // 주소로 검색하는 쿼리문
+    } else {
+        return; // 열 이름이 존재하지 않을 경우 함수 종료
+    }
+    clientQueryModel->setQuery(instruction);    // client DB에 대해 쿼리문 실행
 
+    QList<QString> searchResults;   // 검색 결과를 저장하기 위한 QList
+    for (int i = 0; i < clientQueryModel->rowCount(); i++ ){
+        // 검색 결과의 행 수 만큼 반복
+        // 검색 결과의 모델 데이터를 모두 QList에 저장
+        searchResults << clientQueryModel->data(clientQueryModel->index(i, 0))
+                         .toString()
+                      << clientQueryModel->data(clientQueryModel->index(i, 1))
+                         .toString()
+                      << clientQueryModel->data(clientQueryModel->index(i, 2))
+                         .toString()
+                      << clientQueryModel->data(clientQueryModel->index(i, 3))
+                         .toString();
+    }
+    clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기 출력인 전체 DB 출력
+    emit returnSearching(searchResults);    // 검색 결과와 시그널을 발생
+}

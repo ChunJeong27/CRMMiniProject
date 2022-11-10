@@ -10,6 +10,7 @@ class QFile;
 class QProgressDialog;
 class QListWidgetItem;
 class LogThread;
+class QSqlQueryModel;
 
 namespace Ui {
 class ServerForm;
@@ -57,6 +58,8 @@ private:
     QList<QString> fileNameList;
 
     LogThread* logThread;
+
+    QSqlQueryModel* clientQueryModel;
 
 signals:
     void checkClientId(QString, QString);

@@ -197,33 +197,13 @@
       </layout>
      </item>
      <item>
-      <widget class="QTableWidget" name="tableWidget">
+      <widget class="QTableView" name="tableView">
        <property name="minimumSize">
         <size>
          <width>500</width>
          <height>0</height>
         </size>
        </property>
-       <column>
-        <property name="text">
-         <string>ID</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Name</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Price</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Stock</string>
-        </property>
-       </column>
       </widget>
      </item>
     </layout>

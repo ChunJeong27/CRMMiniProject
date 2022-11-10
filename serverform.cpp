@@ -9,6 +9,7 @@
 #include <QProgressDialog>
 #include <QFileDialog>
 #include <QDir>
+#include <QSqlQueryModel>
 
 #include "chatroomform.h"
 #include "logthread.h"
@@ -18,6 +19,8 @@ ServerForm::ServerForm(QWidget *parent) :
     ui(new Ui::ServerForm)
 {
     ui->setupUi(this);
+
+    clientQueryModel = new QSqlQueryModel;
 
     connect(ui->banishPushButton, SIGNAL(clicked()),
             this, SLOT(kickOutClient()));
@@ -202,10 +205,11 @@ void ServerForm::recieveData()
     {
         QList<QString> idName = body.split("@");
         // id@이름 형식으로 된 데이터를 문자열 리스트로 저장하기 위한 메소드
-        idCheck = false;    // 슬롯 함수에서 bool변수를 변경하기 전 초기화
-        emit checkClientId(idName.at(0), idName.at(1));
+
+        clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1 AND CLIENT_NAME = '%2';").arg(idName.at(1)).arg(idName.at(0)));
+        QString id = clientQueryModel->data(clientQueryModel->index(0, 0)).toString();
         // 고객 정보 폼에서 데이터를 확인하기 위한 시그널 방출
-        if(idCheck){    // 고객 정보가 존재한다면 bool 변수가 슬롯 함수에서 true로 변경됨
+        if( idName.at(1) == id){    // 고객 정보가 존재한다면 bool 변수가 슬롯 함수에서 true로 변경됨
             QList<QListWidgetItem*> result =
                     ui->clientListWidget->findItems(ipPort, Qt::MatchExactly);
             // ip:port 형식으로 리스트에 저장함으로써 연결됨을 표시

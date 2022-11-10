@@ -21,7 +21,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->toolBar->setHidden(true);
 
-    if (!createConnection()) return;
+    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
+    db.setHostName("localhost");
+    db.setDatabaseName("Oracle11gx64");
+    db.setUserName("EJH");
+    db.setPassword("1203");
+    if (!db.open()) {
+        qDebug() << db.lastError().text();
+    } else {
+        qDebug("DB Connection Successful");
+    }
 
     clientForm = new ClientForm;
     ui->tabWidget->addTab(clientForm, "Client Manager");
@@ -30,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tabWidget->addTab(productForm, "Product Manager");
 
     orderForm = new OrderForm;
-    connect(orderForm, SIGNAL(clickedSearchButton()), this, SLOT(createSeachingDialog()));
+    connect(orderForm, SIGNAL(clickedSelectButton()), this, SLOT(createSeachingDialog()));
     ui->tabWidget->addTab(orderForm, "Order Manager");
 
     serverForm = new ServerForm;
@@ -103,14 +112,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
     connect(ui->action_New_Chat_Room, SIGNAL(triggered(bool)), this, SLOT(createChatRoom()));
 
-//    connect(orderForm, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
-    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
-//    connect(orderForm, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
-    connect(productForm, SIGNAL(returnSearching(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));
-
-//    connect(serverForm, SIGNAL(checkClientId(QString,QString)), clientForm, SLOT(searchIdName(QString,QString)));
-    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
-
 
 }
 
@@ -124,13 +125,12 @@ void MainWindow::createSeachingDialog()
 {
     SearchingDialog* searchingDialog = new SearchingDialog(orderForm);
 
-//    connect(searchingDialog, SIGNAL(searchedClient(int,QString)), clientForm, SLOT(searching(int,QString)));
-    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
-    connect(searchingDialog, SIGNAL(searchedProduct(int,QString)), productForm, SLOT(searching(int,QString)));
-    connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
-
     connect(searchingDialog, SIGNAL(returnClient(QList<QString>)), orderForm, SLOT(receiveClientInfo(QList<QString>)));
     connect(searchingDialog, SIGNAL(returnProduct(QList<QString>)), orderForm, SLOT(receiveProductInfo(QList<QString>)));
+    connect(searchingDialog, SIGNAL(searchedClient(QString,QString)), clientForm, SLOT(searching(QString,QString)));
+    connect(clientForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
+    connect(searchingDialog, SIGNAL(searchedProduct(QString,QString)), productForm, SLOT(searching(QString,QString)));
+    connect(productForm, SIGNAL(returnSearching(QList<QString>)), searchingDialog, SLOT(displayTableRow(QList<QString>)));
 
     searchingDialog->open();
 }
@@ -140,19 +140,4 @@ void MainWindow::createChatRoom()
     ChatRoomForm* chatRoomForm = new ChatRoomForm;
     connect(chatRoomForm, SIGNAL(clickedFileList(QListWidgetItem*)), serverForm, SLOT(sendFile(QListWidgetItem*)));
     chatRoomForm->show();
-}
-
-bool MainWindow::createConnection()
-{
-    QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
-    db.setDatabaseName("Oracle11gx64");
-    db.setUserName("EJH");
-    db.setPassword("1203");
-    if (!db.open()) {
-        qDebug() << db.lastError().text();
-    } else {
-        qDebug("success");
-    }
-
-    return true;
 }
