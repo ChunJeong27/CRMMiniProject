@@ -32,6 +32,8 @@ private:
     OrderForm* orderForm;
     ServerForm* serverForm;
 
+    void closeEvent(QCloseEvent*) override;
+
 signals:
     void triggeredClientAction(QWidget*);
     void triggeredProductAction(QWidget*);

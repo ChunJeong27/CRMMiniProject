@@ -7,6 +7,7 @@ class QTcpSocket;
 class QFile;
 class QProgressDialog;
 class QListWidgetItem;
+class ChatLogThread;
 
 namespace Ui {
 class ChatRoomForm;
@@ -61,6 +62,8 @@ private:
     QString filename;
     QFile* newFile;
     QByteArray inBlock;
+
+    ChatLogThread* chatLogThread;
 
 signals:
     void clickedFileList(QListWidgetItem*);

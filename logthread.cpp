@@ -7,8 +7,8 @@
 LogThread::LogThread(QObject *parent)
     : QThread{parent}
 {
-    filename = "log_.txt";
-    filename.insert(4, QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss"));
+    filename = "server_log_.txt";
+    filename.insert(11, QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss"));
 }
 
 void LogThread::run()
@@ -38,7 +38,6 @@ void LogThread::saveData()
                 << item->text(3) << ','
                 << item->text(4) << ','
                 << item->text(5) << '\n';
-
         }
     }
 }

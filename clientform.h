@@ -40,6 +40,7 @@ public slots:
     void modifyTableRow();  // 선택된 테이블위젯의 데이터를 변경하는 함수
     void removeTableRow();  // 선택된 테이블위젯을 제거하는 함수
     void searching(QString, QString);   // orderForm에서 보낸 데이터를 검색하는 함수
+    void checkClient(QString, QString);
 
 };
 

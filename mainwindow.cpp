@@ -112,6 +112,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, SIGNAL(triggeredOrderAction(QWidget*)), ui->tabWidget, SLOT(setCurrentWidget(QWidget*)));
     connect(ui->action_New_Chat_Room, SIGNAL(triggered(bool)), this, SLOT(createChatRoom()));
 
+    connect(serverForm, SIGNAL(checkClientId(QString,QString)), clientForm, SLOT(checkClient(QString,QString)));
+    connect(clientForm, SIGNAL(checkedIdName(bool)), serverForm, SLOT(isClient(bool)));
+
 
 }
 
@@ -119,6 +122,11 @@ MainWindow::~MainWindow()
 {
 
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent*)
+{
+    delete serverForm;
 }
 
 void MainWindow::createSeachingDialog()

@@ -201,7 +201,7 @@ void ClientForm::removeTableRow()
                             QMessageBox::Yes | QMessageBox::No)
             == QMessageBox::Yes){   // Yes를 클릭할 경우 행을 삭제
         QString id = ui->idLineEdit->text();    // 삭제할 행의 id를 문자열로 저장
-        clientQueryModel->setQuery(QString("CALL DELETE_CLIENT('%1')")
+        clientQueryModel->setQuery(QString("CALL DELETE_CLIENT('%1');")
                                    .arg(id));   // id를 통해 삭제하는 쿼리문 실행
     }
     clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기 화면인 전체 DB를 출력
@@ -244,4 +244,12 @@ void ClientForm::searching(QString columnName, QString searchingText)
     }
     clientQueryModel->setQuery("SELECT * FROM CLIENT"); // 초기 출력인 전체 DB 출력
     emit returnSearching(searchResults);    // 검색 결과와 시그널을 발생
+}
+
+void ClientForm::checkClient(QString id, QString name)
+{
+    clientQueryModel->setQuery(QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1 AND CLIENT_NAME = '%2';").arg(id).arg(name));
+//    QString id = clientQueryModel->data(clientQueryModel->index(0, 0)).toString();
+    emit checkedIdName(clientQueryModel->rowCount() > 0 );
+
 }

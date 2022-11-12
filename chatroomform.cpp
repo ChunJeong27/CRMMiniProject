@@ -1,11 +1,13 @@
 #include "chatroomform.h"
 #include "ui_chatroomform.h"
+
 #include <QTcpSocket>
 #include <QFile>
 #include <QProgressDialog>
 #include <QFileDialog>
-#include <QSettings>
 #include <QMessageBox>
+
+#include "chatlogthread.h"
 
 ChatRoomForm::ChatRoomForm(QWidget *parent) :
     QWidget(parent),
@@ -13,60 +15,70 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->ipLineEdit->setText("127.0.0.1");
-    ui->portLineEdit->setText("19000");
+    chatLogThread = new ChatLogThread;
+    chatLogThread->start();
 
+    ui->ipLineEdit->setText("127.0.0.1");   // 라인에디터에 기본 ip 설정
+    ui->portLineEdit->setText("19000");     // 기본 포트 번호 설정
+    // 서버에 연결되기 전 기능을 비활성화
     ui->messageLineEdit->setDisabled(true);
     ui->sentPushButton->setDisabled(true);
     ui->uploadPushButton->setDisabled(true);
-
-    connect(ui->actionPushButton, SIGNAL(clicked()), this, SLOT(connectPushButton()));
+    ui->fileLineEdit->setDisabled(true);
+    // 버튼과 기능 함수를 연결
+    connect(ui->actionPushButton, SIGNAL(clicked()),
+            this, SLOT(connectPushButton()));
     connect(ui->sentPushButton, SIGNAL(clicked()), SLOT(sendMessage()));
-    connect(ui->messageLineEdit, SIGNAL(returnPressed()), this, SLOT(sendMessage()));
+    connect(ui->messageLineEdit, SIGNAL(returnPressed()),
+            this, SLOT(sendMessage()));
 
+    // 채팅을 위한 소켓 생성 및 슬롯 함수 연결
     chatSocket = new QTcpSocket(this);
     connect(chatSocket, &QAbstractSocket::errorOccurred, this,
             [=]{qDebug() << chatSocket->errorString(); });
     connect(chatSocket, SIGNAL(readyRead()), this, SLOT(receiveData()));
-    connect(chatSocket, SIGNAL(disconnected()), this, SLOT(disconnectServer()));
+    connect(chatSocket, SIGNAL(disconnected()),
+            this, SLOT(disconnectServer()));
 
+    // 파일 업로드 소켓 생성 및 슬롯 함수 연결
+    uploadSocket = new QTcpSocket(this);
+    connect(uploadSocket, SIGNAL(bytesWritten(qint64)),
+            this, SLOT(goOnSend(qint64)));
+    // 파일 업로드 버튼과 기능 함수 연결
     connect(ui->uploadPushButton, SIGNAL(clicked()), this, SLOT(sendFile()));
 
-    uploadSocket = new QTcpSocket(this);
-    connect(uploadSocket, SIGNAL(bytesWritten(qint64)), SLOT(goOnSend(qint64)));
-
-
-    connect(ui->fileListWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SIGNAL(clickedFileList(QListWidgetItem*)));
-
-    downloadTotalSize = 0;
-    byteReceived = 0;
-
+    // 파일 다운로드 소켓 생성 및 슬롯 함수 연결
     downloadSocket = new QTcpSocket(this);
-
     downloadSocket->connectToHost(ui->ipLineEdit->text( ),
                                       ui->portLineEdit->text( ).toInt( ) + 200);
     connect(downloadSocket, SIGNAL(readyRead()), this, SLOT(downloadFile()));
-
+    // 리스트 위젯과 파일 다운로드 시그널 방출 연결
+    connect(ui->fileListWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
+            this, SIGNAL(clickedFileList(QListWidgetItem*)));
+    // 다운로드를 위한 멤버 변수 초기화
+    downloadTotalSize = 0;
+    byteReceived = 0;
+    // 파일 업,다운로드를 위한 진행 다이얼로그 초기화
     progressDialog = new QProgressDialog(0);
     progressDialog->setAutoClose(true);
     progressDialog->reset();
 
-    setWindowTitle(tr("Client Chat Room Application"));
+    setWindowTitle(tr("Client Chat Room Application")); // 프로그램 타이틀 설정
 
 }
 
 ChatRoomForm::~ChatRoomForm()
 {
+    // 사용한 통신 소켓 메모리 해제
     chatSocket->close();
     uploadSocket->close();
     downloadSocket->close();
 
-    delete ui;
+    delete ui;  // 사용한 ui 객체 메모리 해제
 }
 
 void ChatRoomForm::closeEvent(QCloseEvent*)
 {
-//    sendProtocol(Chat_LogOut, name->text().toStdString().data());
     chatSocket->write(Chat::Disconnect + (ui->nameLineEdit->text() + "(ID:"
                                          + ui->idLineEdit->text()).toUtf8() + ")");
     chatSocket->disconnectFromHost();
@@ -78,12 +90,13 @@ void ChatRoomForm::closeEvent(QCloseEvent*)
 void ChatRoomForm::disconnectServer( )
 {
     qDebug() << "disconnect";
+    // 메시지, 파일 전송 기능 비활성화
     ui->messageLineEdit->setDisabled(true);
     ui->sentPushButton->setDisabled(true);
     ui->uploadPushButton->setDisabled(true);
+    ui->fileLineEdit->setDisabled(true);
 
-
-    ui->actionPushButton->setText(tr("Connect"));
+    ui->actionPushButton->setText(tr("Connect"));   // 다시 연결을 위해 버튼 텍스트 변경
 }
 
 /* 프로토콜과 데이터를 매개변수로 서버에 소켓을 전송하는 함수 */
@@ -98,41 +111,48 @@ void ChatRoomForm::writeSocket(char type, QByteArray message)
     while(chatSocket->waitForBytesWritten());   // 소켓이 쓰여질 때까지 대기
 }
 
+/* 연결, 입장, 퇴장을 수행하는 슬롯 함수 */
 void ChatRoomForm::connectPushButton()
 {
-    QString name = ui->nameLineEdit->text();
-    QString buttonText = ui->actionPushButton->text();
+    QString name = ui->nameLineEdit->text();    // 라인에디터의 이름을 변수로 저장
+    QString buttonText = ui->actionPushButton->text();  // 상태를 판단할 버튼 텍스트를 저장
 
-    if( "Connect" == buttonText ) {
-        if(name.length()){
-            chatSocket->connectToHost(ui->ipLineEdit->text(), ui->portLineEdit->text().toInt());
-            ui->actionPushButton->setText("Enter");
-        }
-    } else if( "Enter" == buttonText ) {
+    if( "Connect" == buttonText && name.length() > 0 ) {
+        // 버튼 텍스트가 연결이고 이름이 빈칸이 아니면
+        // ip주소와 port로 서버 호스트 연결 요청
+        chatSocket->connectToHost(ui->ipLineEdit->text(),
+                                  ui->portLineEdit->text().toInt());
+        ui->actionPushButton->setText("Enter"); // 버튼의 텍스트를 변경
+    } else if( "Enter" == buttonText ) {    // 채팅방 입장 기능
+        // 메시지, 파일 전송 기능 활성화
         ui->messageLineEdit->setEnabled(true);
         ui->sentPushButton->setEnabled(true);
         ui->uploadPushButton->setEnabled(true);
+        ui->fileLineEdit->setEnabled(true);
+        // 서버 연결 기능 비활성화
         ui->ipLineEdit->setDisabled(true);
         ui->portLineEdit->setDisabled(true);
         ui->idLineEdit->setDisabled(true);
         ui->nameLineEdit->setDisabled(true);
 
-        chatSocket->write(Chat::Enter + name.toUtf8());
-        ui->actionPushButton->setText("Leave");
-    } else if( "Leave" == buttonText){
+        chatSocket->write(Chat::Enter + name.toUtf8()); // 입장 프로토콜과 이름을 서버로 전달
+        ui->actionPushButton->setText("Leave"); // 다음 동작을 위한 버튼 텍스트 설정
+    } else if( "Leave" == buttonText){  // 채팅방 퇴장 기능
+        // 메시지, 파일 전송 기능 비활성화
         ui->messageLineEdit->setDisabled(true);
         ui->sentPushButton->setDisabled(true);
         ui->uploadPushButton->setDisabled(true);
+        ui->fileLineEdit->setDisabled(true);
+        // 채팅방 입장 기능 활성화
         ui->ipLineEdit->setEnabled(true);
         ui->portLineEdit->setEnabled(true);
         ui->idLineEdit->setEnabled(true);
         ui->nameLineEdit->setEnabled(true);
-        ui->chattingTextEdit->append("Chat Room Ended.");
 
-        chatSocket->write(Chat::Leave + name.toUtf8());
-        ui->actionPushButton->setText("Enter");
+        ui->chattingTextEdit->append("Chat Room Ended.");   // 채팅방 입장 메시지
+        chatSocket->write(Chat::Leave + name.toUtf8()); // 퇴장 프로토콜 전송
+        ui->actionPushButton->setText("Enter"); // 다음 동작을 위한 버튼 텍스트 설정
     }
-
 }
 
 /* 서버에서 보낸 채팅 데이터를 프로토콜을 통해 받는 슬롯 함수 */
@@ -142,7 +162,8 @@ void ChatRoomForm::receiveData()
     // 네트워크 소켓을 보낸 객체를 sender로 불러온 후 객체로 선언
     if(chatSocket->bytesAvailable() > BLOCK_SIZE)     return;
     // 소켓의 데이터가 읽을 수 있는 블록 사이즈보다 크다면 읽어올 수 없기 때문에 함수를 종료
-    QByteArray byteArray = chatSocket->read(BLOCK_SIZE);    // 소켓으로부터 데이터를 읽어서 변수로 선언
+    QByteArray byteArray = chatSocket->read(BLOCK_SIZE);
+    // 소켓으로부터 데이터를 읽어서 변수로 선언
 
     char header = byteArray.at(0);   // 클라이언트에서 수행할 동작을 갖고 있는 첫 1byte를 변수로 선언
     QString body = byteArray.remove(0, 1);  // 데이터가 들어있는 헤더 이후의 값을 변수로 선언
@@ -150,17 +171,19 @@ void ChatRoomForm::receiveData()
     QString id = ui->idLineEdit->text();    // 서버에 전송할 id를 변수로 선언
     QString name = ui->nameLineEdit->text();    // 서버에 전송할 이름을 변수로 선언
 
+    QString action;
+
     switch(header){
     case Chat::Connect: // 연결 프로토콜에 대한 클라이언트 응답
         writeSocket(Chat::Connect, name.toUtf8()
                     + "@" + id.toUtf8());
         // 서버에 등록하기 위한 이름과 id데이터를 형식에 맞게 전송
+        action = "CONNECT";
         break;
 
     case Chat::Enter:   // 입장 프로토콜에 대한 클라이언트 동작
     {
         QList<QString> dataList = body.split("/");  // 기호로 구분된 데이터를 나눠 리스트로 저장
-        qDebug() << dataList;
 
         ui->chattingTextEdit->append(dataList.takeFirst());
         // 첫 번째 데이터인 채팅 메시지 전달
@@ -180,10 +203,12 @@ void ChatRoomForm::receiveData()
             // 파일리스트 목록을 아이템으로 선언
             ui->fileListWidget->addItem(fileItem);  // 생성한 아이템을 리스트위젯에 추가
         }
+        action = "ENTER";
     } break;
 
     case Chat::Message: // 메시지 프로토콜에 대한 동작
         ui->chattingTextEdit->append(body); // 데이터를 채팅방에 출력
+        action = "MESSAGE";
         break;
 
     case Chat::Invite:  // 초대 프로토콜에 대한 클라이언트 동작
@@ -191,6 +216,7 @@ void ChatRoomForm::receiveData()
         ui->messageLineEdit->setEnabled(true);  // 메시지 입력 라인에디터 활성화
         ui->sentPushButton->setEnabled(true);   // 보내기 버튼 활성화
         ui->uploadPushButton->setEnabled(true); // 파일 업로드 버튼 활성화
+        ui->fileLineEdit->setEnabled(true);
         ui->ipLineEdit->setDisabled(true);
         ui->portLineEdit->setDisabled(true);
         ui->idLineEdit->setDisabled(true);
@@ -200,6 +226,7 @@ void ChatRoomForm::receiveData()
 
         writeSocket(Chat::Invite, "Invited " + name.toUtf8());
         // 동작을 마친 후 로그 기록을 위한 메시지를 서버로 전송
+        action = "INVITE";
     } break;
 
     case Chat::KickOut:  // 강퇴 프로토콜에 대한 클라이언트 동작
@@ -207,6 +234,7 @@ void ChatRoomForm::receiveData()
         ui->messageLineEdit->setDisabled(true); // 메시지 입력 라인에디터 비활성화
         ui->sentPushButton->setDisabled(true);  // 보내기 버튼 비활성화
         ui->uploadPushButton->setDisabled(true);    // 파일 업로드 버튼 비활성화
+        ui->fileLineEdit->setDisabled(true);
         ui->ipLineEdit->setEnabled(true);
         ui->portLineEdit->setEnabled(true);
         ui->idLineEdit->setEnabled(true);
@@ -216,13 +244,13 @@ void ChatRoomForm::receiveData()
 
         writeSocket(Chat::KickOut, name.toUtf8());
         // 동작을 마친 후 로그 기록을 위한 메시지를 서버로 전송
+        action = "KICK OUT";
     } break;
 
     case Chat::ClientList:  // 클라이언트 리스트 갱신 프로토콜에 대한 동작
     {
         QList<QString> dataList = body.split("/");
         // 클라이언트 리스트를 기호로 구분하고 리스트로 선언
-        qDebug() << dataList;
 
         ui->clientListWidget->clear();  // 리스트를 갱신하기 전에 초기화
         foreach(QString list, dataList){    // 리스트의 개수만큼 반복
@@ -230,12 +258,12 @@ void ChatRoomForm::receiveData()
             // 리스트의 내용으로 리스트 아이템을 생성
             ui->clientListWidget->addItem(nameItem);    // 생성한 아이템을 리스트위젯에 저장
         }
+        action = "UPDATE CLIENT LIST";
     } break;
 
     case Chat::FileList:
         QList<QString> fileList = body.split("/");
         // 파일 리스트를 기호로 구분하고 리스트로 선언
-        qDebug() << fileList;
 
         ui->fileListWidget->clear();  // 리스트를 갱신하기 전에 초기화
         foreach(QString list, fileList){    // 리스트의 개수만큼 반복
@@ -243,8 +271,20 @@ void ChatRoomForm::receiveData()
             // 리스트의 내용으로 리스트 아이템을 생성
             ui->fileListWidget->addItem(nameItem);    // 생성한 아이템을 리스트위젯에 저장
         }
+        action = "UPDATE FILE LIST";
         break;
     }
+//    QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
+    // 로그를 기록하기 위한 트리위젯아이템 선언
+    QString log;
+    log.append(QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss") + '/');
+    // 첫 번째 열에 현재 시각을 원하는 형식의 문자열로 저장
+    log.append(ui->ipLineEdit->text() + '/');    // 두 번째 열에 ip문자열을 저장
+    log.append(ui->portLineEdit->text() + '/'); // 세 번째 문자열에 포트번호 저장
+    log.append(ui->nameLineEdit->text() + '/');    // 네 번째 문자열로 이름과 아이디를 저장
+    log.append(action + '/');    // 서버에 동작한 프로토콜을 문자열로 저장
+    log.append(body + '/');  // 여섯 번째 문자열에 전송받은 데이터를 저장
+    chatLogThread->appendData(log); // 로그 기록 쓰레드에 아이템을 전달하여 저장
 }
 
 /* 버튼 시그널이 발생했을 때 서버에 메시지를 보내는 슬롯 함수 */
@@ -353,7 +393,6 @@ void ChatRoomForm::downloadFile()
         newFile->open(QIODevice::WriteOnly);    // 다운로드할 파일을 쓰기 전용으로 열기
 
     } else {
-        qDebug("read?");
         inBlock = socket->readAll();    // 소켓의 모든 데이터를 읽어옴
 
         byteReceived += inBlock.size();
@@ -368,18 +407,19 @@ void ChatRoomForm::downloadFile()
     if(byteReceived == downloadTotalSize){
         qDebug() << QString("%1 receive completed").arg(filename);
 
-        QFileInfo info(filename);
-        QString currentFileName = info.fileName();
+        QFileInfo info(filename);   // 파일 경로로부터 파일 정보를 가져와 변수로 선언
+        QString currentFileName = info.fileName();  // 파일 이름만을 문자열로 저장
 
         writeSocket(Chat::FileDownload, currentFileName.toUtf8());
+        // 다운로드 프로토콜과 파일 이름을 서버로 전송
 
-        inBlock.clear();
-        byteReceived = 0;
-        downloadTotalSize = 0;
-        progressDialog->reset();
-        progressDialog->hide();
-        newFile->close();
+        inBlock.clear();    // 블록 초기화
+        byteReceived = 0;   // 받은 파일 변수 초기화
+        downloadTotalSize = 0;  // 전체 다운로드 파일 사이즈 초기화
+        progressDialog->reset();    // 진행 다이얼로그 리셋
+        progressDialog->hide();     // 진행 다이얼로그 숨김
+        newFile->close();   // 다운로드 파일 닫기
 
-        delete newFile;
+        delete newFile;     // 다운로드 파일 변수 메모리 해제
     }
 }
