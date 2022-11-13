@@ -27,18 +27,20 @@ void ChatLogThread::run()
 
 void ChatLogThread::appendData(QString log)
 {
-    logList.append(log);
+    logList.enqueue(log);
 }
 
 void ChatLogThread::saveData()
 {
-    if ( logList.count() > 0 ) {
+    if ( !logList.isEmpty() ) {
         QFile file(filename);
-        if ( !file.open(QIODevice::WriteOnly | QIODevice::Text ) )  return;
+        if ( !file.open(QIODevice::WriteOnly | QIODevice::Append
+                        | QIODevice::Text ) )  return;
 
         QTextStream out(&file);
         foreach ( QString item, logList ) {
             out << item << '\n';
         }
+        logList.clear();
     }
 }

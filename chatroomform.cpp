@@ -64,7 +64,6 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     progressDialog->reset();
 
     setWindowTitle(tr("Client Chat Room Application")); // 프로그램 타이틀 설정
-
 }
 
 ChatRoomForm::~ChatRoomForm()

@@ -2,6 +2,7 @@
 #define CHATLOGTHREAD_H
 
 #include <QThread>
+#include <QQueue>
 
 class QTreeWidgetItem;
 
@@ -15,7 +16,7 @@ public:
 private:
     void run() override;
 
-    QList<QString> logList;
+    QQueue<QString> logList;
     QString filename;
 
 signals:
