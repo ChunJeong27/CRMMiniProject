@@ -15,8 +15,8 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    chatLogThread = new ChatLogThread;
-    chatLogThread->start();
+    chatLogThread = new ChatLogThread;  // 로그 기록 쓰레드 생성
+    chatLogThread->start(); // 쓰레드 실행
 
     ui->ipLineEdit->setText("127.0.0.1");   // 라인에디터에 기본 ip 설정
     ui->portLineEdit->setText("19000");     // 기본 포트 번호 설정
@@ -54,7 +54,7 @@ ChatRoomForm::ChatRoomForm(QWidget *parent) :
     connect(downloadSocket, SIGNAL(readyRead()), this, SLOT(downloadFile()));
     // 리스트 위젯과 파일 다운로드 시그널 방출 연결
     connect(ui->fileListWidget, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
-            this, SIGNAL(clickedFileList(QListWidgetItem*)));
+            this, SLOT(clickedFileList(QListWidgetItem*)));
     // 다운로드를 위한 멤버 변수 초기화
     downloadTotalSize = 0;
     byteReceived = 0;
@@ -76,11 +76,15 @@ ChatRoomForm::~ChatRoomForm()
     delete ui;  // 사용한 ui 객체 메모리 해제
 }
 
+/* 프로그램이 닫혔을 때 서버로 프로토콜 전송 */
 void ChatRoomForm::closeEvent(QCloseEvent*)
 {
-    chatSocket->write(Chat::Disconnect + (ui->nameLineEdit->text() + "(ID:"
-                                         + ui->idLineEdit->text()).toUtf8() + ")");
-    chatSocket->disconnectFromHost();
+    // 서버로 연결 끊김 프로토콜과 이름, 아이디를 전송
+    chatSocket->write(Chat::Disconnect
+                      + (ui->nameLineEdit->text() + "(ID:"
+                         + ui->idLineEdit->text()).toUtf8() + ")");
+    chatSocket->disconnectFromHost();   // 서버와 연결 끊기
+    // 연결이 끊어진 상태가 될 때까지 대기하는 조건문
     if(chatSocket->state() != QAbstractSocket::UnconnectedState)
         chatSocket->waitForDisconnected();
 }
@@ -151,6 +155,15 @@ void ChatRoomForm::connectPushButton()
         ui->chattingTextEdit->append("Chat Room Ended.");   // 채팅방 입장 메시지
         chatSocket->write(Chat::Leave + name.toUtf8()); // 퇴장 프로토콜 전송
         ui->actionPushButton->setText("Enter"); // 다음 동작을 위한 버튼 텍스트 설정
+
+        QString log;
+        log.append(QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss") + ',');
+        // 첫 번째 열에 현재 시각을 원하는 형식의 문자열로 저장
+        log.append(ui->ipLineEdit->text() + ',');    // 두 번째 열에 ip문자열을 저장
+        log.append(ui->portLineEdit->text() + ','); // 세 번째 문자열에 포트번호 저장
+        log.append(ui->nameLineEdit->text() + ',');    // 네 번째 문자열로 이름과 아이디를 저장
+        log.append("LEAVE");    // 서버에 동작한 프로토콜을 문자열로 저장
+        chatLogThread->appendData(log); // 로그 기록 쓰레드에 아이템을 전달하여 저장
     }
 }
 
@@ -276,13 +289,13 @@ void ChatRoomForm::receiveData()
 //    QTreeWidgetItem* log = new QTreeWidgetItem(ui->logTreeWidget);
     // 로그를 기록하기 위한 트리위젯아이템 선언
     QString log;
-    log.append(QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss") + '/');
+    log.append(QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss") + ',');
     // 첫 번째 열에 현재 시각을 원하는 형식의 문자열로 저장
-    log.append(ui->ipLineEdit->text() + '/');    // 두 번째 열에 ip문자열을 저장
-    log.append(ui->portLineEdit->text() + '/'); // 세 번째 문자열에 포트번호 저장
-    log.append(ui->nameLineEdit->text() + '/');    // 네 번째 문자열로 이름과 아이디를 저장
-    log.append(action + '/');    // 서버에 동작한 프로토콜을 문자열로 저장
-    log.append(body + '/');  // 여섯 번째 문자열에 전송받은 데이터를 저장
+    log.append(ui->ipLineEdit->text() + ',');    // 두 번째 열에 ip문자열을 저장
+    log.append(ui->portLineEdit->text() + ','); // 세 번째 문자열에 포트번호 저장
+    log.append(ui->nameLineEdit->text() + ',');    // 네 번째 문자열로 이름과 아이디를 저장
+    log.append(action + ',');    // 서버에 동작한 프로토콜을 문자열로 저장
+    log.append(body);  // 여섯 번째 문자열에 전송받은 데이터를 저장
     chatLogThread->appendData(log); // 로그 기록 쓰레드에 아이템을 전달하여 저장
 }
 
@@ -298,6 +311,16 @@ void ChatRoomForm::sendMessage()
                              + " : " + message).toUtf8());  // 메시지를 서버로 전송
         ui->chattingTextEdit->append("Me : " + message);
         // 클라이언트의 채팅방에도 동일한 메시지를 출력
+
+        QString log;
+        log.append(QDateTime::currentDateTime().toString("yyMMdd hh:mm:ss") + ',');
+        // 첫 번째 열에 현재 시각을 원하는 형식의 문자열로 저장
+        log.append(ui->ipLineEdit->text() + ',');    // 두 번째 열에 ip문자열을 저장
+        log.append(ui->portLineEdit->text() + ','); // 세 번째 문자열에 포트번호 저장
+        log.append(ui->nameLineEdit->text() + ',');    // 네 번째 문자열로 이름과 아이디를 저장
+        log.append("MESSAGE,");    // 서버에 동작한 프로토콜을 문자열로 저장
+        log.append("Me : " + message);  // 여섯 번째 문자열에 전송받은 데이터를 저장
+        chatLogThread->appendData(log); // 로그 기록 쓰레드에 아이템을 전달하여 저장
     }
 }
 
@@ -365,6 +388,12 @@ void ChatRoomForm::goOnSend(qint64 numBytes)
     }
 }
 
+void ChatRoomForm::clickedFileList(QListWidgetItem* filename)
+{
+    writeSocket(Chat::FileDownload, filename->text().toUtf8());
+
+}
+
 /* 서버에서 파일을 다운로드하기 위한 함수 */
 void ChatRoomForm::downloadFile()
 {
@@ -405,12 +434,6 @@ void ChatRoomForm::downloadFile()
 
     if(byteReceived == downloadTotalSize){
         qDebug() << QString("%1 receive completed").arg(filename);
-
-        QFileInfo info(filename);   // 파일 경로로부터 파일 정보를 가져와 변수로 선언
-        QString currentFileName = info.fileName();  // 파일 이름만을 문자열로 저장
-
-        writeSocket(Chat::FileDownload, currentFileName.toUtf8());
-        // 다운로드 프로토콜과 파일 이름을 서버로 전송
 
         inBlock.clear();    // 블록 초기화
         byteReceived = 0;   // 받은 파일 변수 초기화

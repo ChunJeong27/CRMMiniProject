@@ -146,6 +146,5 @@ void MainWindow::createSeachingDialog()
 void MainWindow::createChatRoom()
 {
     ChatRoomForm* chatRoomForm = new ChatRoomForm;
-    connect(chatRoomForm, SIGNAL(clickedFileList(QListWidgetItem*)), serverForm, SLOT(sendFile(QListWidgetItem*)));
     chatRoomForm->show();
 }

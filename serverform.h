@@ -74,7 +74,7 @@ private slots:
     void acceptUploadConnection();
     void readClient();
     void acceptTransferConnection();
-    void sendFile(QListWidgetItem*);
+    void sendFile(QString);
     void goOnSend(qint64);
 
 };

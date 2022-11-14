@@ -17,9 +17,6 @@ private:
     QList<QTreeWidgetItem*> itemList;
     QString filename;
 
-signals:
-    void send(int data);
-
 public slots:
     void appendData(QTreeWidgetItem*);
     void saveData();

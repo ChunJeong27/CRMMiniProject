@@ -382,6 +382,7 @@ void ServerForm::recieveData()
     } break;
 
     case Chat::FileDownload:    // 파일 다운로드 프로토콜
+        sendFile(body);
         action = "DOWNLOAD";    // 로그에 기록할 문자열을 저장
         break;
 
@@ -555,7 +556,7 @@ void ServerForm::readClient()
 }
 
 /* 파일 데이터를 보내기 위한 초기 설정 슬롯 함수 */
-void ServerForm::sendFile(QListWidgetItem* fileNameItem)
+void ServerForm::sendFile(QString fileNameItem)
 // 파일을 열고 경로를 포함한 파일 이름을 서버로부터 가져옴
 {
     loadSize = 0;   // 매번 서버로 보낼 바이트의 크기
@@ -563,7 +564,7 @@ void ServerForm::sendFile(QListWidgetItem* fileNameItem)
     transferTotalSize = 0;  // 총 파일의 크기
     outBlock.clear();   // 서버로 보낼 바이트 어레이를 초기화
 
-    QString filename = QDir::currentPath() + "/" + fileNameItem->text();
+    QString filename = QDir::currentPath() + "/" + fileNameItem;
     // 워킹 경로에 있는 파일을 가져옴
     file = new QFile(filename); // QFile로 선언
     file->open(QFile::ReadOnly);    // 파일을 읽기 전용으로 열기
