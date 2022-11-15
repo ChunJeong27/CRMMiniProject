@@ -21,66 +21,74 @@ ServerForm::ServerForm(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->banishPushButton, SIGNAL(clicked()),
-            this, SLOT(kickOutClient()));
+            this, SLOT(kickOutClient()));   // 강퇴 버튼 슬롯 함수 연결
     connect(ui->invitePushButton, SIGNAL(clicked()),
-            this, SLOT(inviteClient()));
+            this, SLOT(inviteClient()));    // 초대 버튼 슬롯 함수 연결
 
-    logThread = new LogThread(this);
-    logThread->start();
+    logThread = new LogThread(this);    // 쓰레드 생성
+    logThread->start();     // 쓰레드 시작
 
     connect(ui->logSavePushButton, SIGNAL(clicked()),
-            logThread, SLOT(saveData()));
+            logThread, SLOT(saveData()));   // 로그 저장 버튼 슬롯 함수 연결
 
-    tcpServer = new QTcpServer(this);
+    tcpServer = new QTcpServer(this);   // 채팅 서버 생성
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(connectClient()));
+    // 채팅방이 연결됐을 때 실행할 슬롯 함수 연결
 
-    if(!tcpServer->listen(QHostAddress::Any, 19000)){
+    if(!tcpServer->listen(QHostAddress::Any, 19000)){   // listen 실행
         QMessageBox::critical(this, tr("Chatting Server"),
                               tr("Unable to start the server: %1.")
                               .arg(tcpServer->errorString()));
+        // listen에 실패할 경우 에러메시지 출력
         return;
     }
 
+    // 포트 번호를 LineEdit에 출력
     ui->portNumLineEdit->setText("Port Number : "
                                  + QString::number(tcpServer->serverPort()));
     qDebug()<<tr("The server is running on port %1.")
               .arg(tcpServer->serverPort());
-
+    // 파일 서버 로그에 출력
     ui->textEdit->setText("File Upload Server Start!!!");
 
-    uploadTotalSize = 0;
+    uploadTotalSize = 0;    // 파일 업로드 멤버 변수 초기화
     byteReceived = 0;
 
-    uploadServer = new QTcpServer(this);
+    uploadServer = new QTcpServer(this);    // 업로드 서버 생성
     connect(uploadServer, SIGNAL(newConnection()),
-            this, SLOT(acceptUploadConnection()));
+            this, SLOT(acceptUploadConnection()));  // 채팅방 연결시 동작할 슬롯 함수 연결
 
+    // 업로드 서버 listen
     if(!uploadServer->listen(QHostAddress(QHostAddress::Any), 19100)){
         QMessageBox::critical(this, tr("File Upload Server"),
                               tr("Unable to start the server: %1.")
                               .arg(uploadServer->errorString( )));
+        // listen 실패시 에러 메시지 출력
         return;
     }
 
-    ui->textEdit->append(tr("Start Upload listenint ..."));
+    ui->textEdit->append(tr("Start Upload listenint ...")); // 업로드 서버 로그 출력
     qDebug("Start Upload listening ...");
 
-    ui->textEdit->setText("File Download Server Start!!!");
+    ui->textEdit->setText("File Download Server Start!!!"); // 다운로드 서버 로그 출력
 
-    transferServer = new QTcpServer(this);
+    transferServer = new QTcpServer(this);  // 다운로드 서버 생성
     connect(transferServer, SIGNAL(newConnection()),
-            this, SLOT(acceptTransferConnection()));
+            this, SLOT(acceptTransferConnection()));    // 채팅방 연결시 동작할 슬롯 함수 연결
 
+    // listen 실행
     if(!transferServer->listen(QHostAddress(QHostAddress::Any), 19200)){
         QMessageBox::critical(this, tr("File Download Server"),
                               tr("Unable to start the server: %1.")
                               .arg(uploadServer->errorString( )));
+        // listen 실패시 에러 메시지 출력
         return;
     }
 
-    ui->textEdit->append(tr("Start Download listenint ..."));
+    ui->textEdit->append(tr("Start Download listenint ..."));   // 다운로드 서버 로그 출력
     qDebug("Start Download listening ...");
 
+    // 진행 상황을 나타낼 프로그레스 다이얼로그 초기화
     progressDialog = new QProgressDialog(0);
     progressDialog->setAutoClose(true);
     progressDialog->reset();
