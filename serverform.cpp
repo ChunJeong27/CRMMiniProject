@@ -95,58 +95,62 @@ ServerForm::ServerForm(QWidget *parent) :
 
 }
 
+/* 사용한 서버를 닫는 소멸자 */
 ServerForm::~ServerForm()
 {
     qDebug() << "close";
-    foreach(QTcpSocket* socket, clientSocketList){
-        qDebug() << socket->peerPort();
+    foreach(QTcpSocket* socket, clientSocketList){  // 모든 소켓의 연결을 끊는 반복문
         socket->disconnectFromHost();
     }
 
-    logThread->terminate();
-    tcpServer->close();
+    logThread->terminate();     // 쓰레드 종료
+    tcpServer->close();     // 사용한 3개의 서버 닫음
     uploadServer->close();
     transferServer->close();
 
     delete ui;
 }
 
+/* 소켓에 데이터를 전송하기 위한 함수 */
 void ServerForm::writeSocket(QTcpSocket* socket, char type, QByteArray message)
 {
-    QByteArray outByteArray;
-    outByteArray.append(type);
-    outByteArray.append(message);
+    QByteArray outByteArray;    // 보낼 데이터를 저장할 바이트어레이 변수 선언
+    outByteArray.append(type);  // 프로토콜 종류 저장
+    outByteArray.append(message);   // 보낼 데이터 저장
 
-    socket->write(outByteArray);
-    socket->flush();
-    while(socket->waitForBytesWritten());
+    socket->write(outByteArray);    // 소켓을 통해 클라이언트에 전송
+    socket->flush();    // 소켓 메모리 비우기
+    while(socket->waitForBytesWritten());   // 소켓에 데이터가 쓰여질 때까지 대기
 }
 
+/* 활성화된 고객에게 데이터를 전송하는 함수 */
 void ServerForm::sendActivatedChatRoom(char type, QByteArray byteArray)
 {
     foreach(QTcpSocket* sock, clientSocketList){
-        // 리스트의 접속된 클라이언트 소켓에 보내기 위해 반복
-        if(!waitingClient.isEmpty()){   // 대기방 고객 리스트가 비어있지 않다면
+        // 리스트의 접속된 클라이언트 소켓에 보내기 위해 반복
+        if(!waitingClient.isEmpty()){   // 대기방 고객 리스트가 비어있지 않다면
             foreach(QTcpSocket* waiting, waitingClient){
                 // 대기방의 고객에는 전송하지 않기 위해 반복
                 if(sock != waiting){    // 대기방에 없다면
                     writeSocket(sock, type, byteArray);
-                    // 입장 프로토콜로 저장한 데이터를 전송
+                    // 입장 프로토콜로 저장한 데이터를 전송
                 }
             }
         } else {
             writeSocket(sock, type, byteArray);
-            // 입장 프로토콜로 저장한 데이터를 전송
+            // 입장 프로토콜로 저장한 데이터를 전송
         }
     }
 }
 
+/* 메시지를 보낸 고객을 제외한 다른 고객들에게 메시지를 보내는 함수 */
 void ServerForm::sendMessage(QTcpSocket* clientSocket, QByteArray byteArray)
 {
     foreach(QTcpSocket* sock, clientSocketList){
         // 리스트에 접속된 클라이언트 소켓으로 보내기 위해 반복
         if(!waitingClient.isEmpty()){   // 대기방 고객 리스트가 비어있지 않다면
             foreach(QTcpSocket* waiting, waitingClient){
+                // 대기방의 고객에게는 메시지를 보내지 않는 조건문
                 if(sock != waiting && sock != clientSocket){
                     writeSocket(sock, Chat::Message, byteArray);
                 }
@@ -159,6 +163,7 @@ void ServerForm::sendMessage(QTcpSocket* clientSocket, QByteArray byteArray)
     }
 }
 
+/* 클라이언트가 연결되었을 때 실행하는 슬롯 함수 */
 void ServerForm::connectClient()
 {
     QTcpSocket *clientSocket(tcpServer->nextPendingConnection());
@@ -183,8 +188,8 @@ void ServerForm::removeItem()
 {
     QTcpSocket *clientConnection = qobject_cast<QTcpSocket *>(sender());
     // 신호를 방출한 객체를 sender로 받고 소켓으로 선언
-    clientSocketList.removeOne(clientConnection);   // 신호가 끊어진 객체를 리스트에서 삭제
-    waitingClient.removeOne(clientConnection);  // 신호가 끊어진 객체를 대기방 리스트에서 삭제
+    clientSocketList.removeOne(clientConnection);   // 신호가 끊어진 객체를 리스트에서 삭제
+    waitingClient.removeOne(clientConnection);  // 신호가 끊어진 객체를 대기방 리스트에서 삭제
     clientConnection->deleteLater();    // 신호가 끊어진 객체를 삭제
 }
 
