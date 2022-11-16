@@ -122,15 +122,7 @@ void ClientForm::selectReturnPressedId()
     // 모델에 ID 검색을 쿼리문으로 실행
     clientQueryModel->setQuery(
                 QString("SELECT * FROM CLIENT WHERE CLIENT_ID = %1").arg(id));
-//    QString name = clientQueryModel
-//            ->data(clientQueryModel->index(0, 1)).toString();
-//    QString phoneNum = clientQueryModel
-//            ->data(clientQueryModel->index(0, 2)).toString();
-//    QString address = clientQueryModel
-//            ->data(clientQueryModel->index(0, 3)).toString();
-//    ui->nameLineEdit->setText(name);
-//    ui->phoneNumLineEdit->setText(phoneNum);
-//    ui->addressLineEdit->setText(address);
+    // 데이터를 입력하는 라인에디터 초기화
     ui->idLineEdit->clear();
     ui->nameLineEdit->clear();
     ui->phoneNumLineEdit->clear();
