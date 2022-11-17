@@ -27,7 +27,6 @@ private:
 
 signals:
     void checkedIdName(bool);   // ID와 이름의 유무를 확인하고 반환하는 시그널
-
     void returnSearching(QList<QString>);   // orderForm에서 요청한 검색 결과를 반환하는 시그널
 
 public slots:

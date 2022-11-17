@@ -100,7 +100,8 @@ void ProductForm::addTableRow()
         return;     // 경고메시지 출력 후 함수 종료
     }
     else {  // 모든 라인에디터 값이 존재할 경우
-        productQueryModel->setQuery(QString("CALL INSERT_PRODUCT('%1', '%2', '%3')")
+        productQueryModel->setQuery(
+                    QString("CALL INSERT_PRODUCT('%1', '%2', '%3')")
                                    .arg(name).arg(price).arg(stock));
         productQueryModel->setQuery("SELECT * FROM PRODUCT");
     }
@@ -126,17 +127,22 @@ void ProductForm::selectReturnPressedLineEdit()
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(sender());
     if(lineEdit == nullptr)     return;     // 라인에디터가 존재하지 않을 경우 함수 종료
 
-    int lineEditColumn(0);  // 라인에디터의 값과 대응되는 행을 저장하기 위한 변수
     // 라인에디터의 값이 저장되는 행을 객체 이름을 통해 조건문으로 처리하여 번호를 저장
     if( lineEdit->objectName() == "nameLineEdit" ){
         QString name = ui->nameLineEdit->text();
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRODUCT_NAME = '%1'").arg(name));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE PRODUCT_NAME = '%1'")
+                    .arg(name));
     } else if( lineEdit->objectName() == "priceLineEdit" ){
         QString price = ui->priceLineEdit->text();
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRICE = '%1'").arg(price));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE PRICE = '%1'")
+                    .arg(price));
     } else if( lineEdit->objectName() == "stockLineEdit" ){
         QString stock = ui->stockLineEdit->text();
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE ADDRESS = '%1'").arg(stock));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE ADDRESS = '%1'")
+                    .arg(stock));
     } else {
         return;     // 조건에 해당하지 않을 경우 함수를 종료
     }
@@ -157,7 +163,8 @@ void ProductForm::modifyTableRow()
     ui->priceLineEdit->clear();
     ui->stockLineEdit->clear();
 
-    productQueryModel->setQuery(QString("CALL UPDATE_PRODUCT(%1, '%2', '%3', '%4')")
+    productQueryModel->setQuery(
+                QString("CALL UPDATE_PRODUCT(%1, '%2', '%3', '%4')")
                                .arg(id).arg(name).arg(price).arg(stock));
     productQueryModel->setQuery("SELECT * FROM PRODUCT");
 }
@@ -170,7 +177,8 @@ void ProductForm::removeTableRow()
                              QMessageBox::Yes | QMessageBox::No)
             == QMessageBox::Yes){
         QString id = ui->idLineEdit->text();
-        productQueryModel->setQuery(QString("CALL DELETE_PRODUCT('%1')").arg(id));
+        productQueryModel->setQuery(QString("CALL DELETE_PRODUCT('%1')")
+                                    .arg(id));
     }
         // Yes를 선택할 경우 행을 삭제
     productQueryModel->setQuery("SELECT * FROM PRODUCT");
@@ -181,23 +189,35 @@ void ProductForm::removeTableRow()
 void ProductForm::searching(QString columnName, QString searchingText)
 {
     if( "ID" == columnName ){ // 항목 값에 따라 인자값을 다르게 시그널 발생
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRODUCT_ID = %1").arg(searchingText));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE PRODUCT_ID = %1")
+                    .arg(searchingText));
     } else if( "Name" == columnName ){
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRODUCT_NAME = '%1'").arg(searchingText));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE PRODUCT_NAME = '%1'")
+                    .arg(searchingText));
     } else if( "Price" == columnName ){
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE PRICE = '%1'").arg(searchingText));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE PRICE = '%1'")
+                    .arg(searchingText));
     } else if( "Stock" == columnName ){
-        productQueryModel->setQuery(QString("SELECT * FROM PRODUCT WHERE STOCK = '%1'").arg(searchingText));
+        productQueryModel->setQuery(
+                    QString("SELECT * FROM PRODUCT WHERE STOCK = '%1'")
+                    .arg(searchingText));
     } else {
         return;
     }
     QList<QString> searchResults;
     int resultRow = productQueryModel->rowCount();
     for (int i = 0; i < resultRow; i++ ){
-        searchResults << productQueryModel->data(productQueryModel->index(i, 0)).toString()
-                      << productQueryModel->data(productQueryModel->index(i, 1)).toString()
-                      << productQueryModel->data(productQueryModel->index(i, 2)).toString()
-                      << productQueryModel->data(productQueryModel->index(i, 3)).toString();
+        searchResults << productQueryModel
+                         ->data(productQueryModel->index(i, 0)).toString()
+                      << productQueryModel
+                         ->data(productQueryModel->index(i, 1)).toString()
+                      << productQueryModel
+                         ->data(productQueryModel->index(i, 2)).toString()
+                      << productQueryModel
+                         ->data(productQueryModel->index(i, 3)).toString();
     }
     productQueryModel->setQuery("SELECT * FROM PRODUCT");
     emit returnSearching(searchResults);

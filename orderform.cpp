@@ -45,17 +45,27 @@ OrderForm::OrderForm(QWidget *parent) :
         quint32 amount = ui->productPriceLineEdit->text().toUInt() * i;
         ui->amountLineEdit->setText(QString::number(amount));});
     // select 버튼 클릭시 mainWindow에 dialog를 여는 시그널 방출
-    connect(ui->selectPushButton, SIGNAL(clicked()), this, SIGNAL(clickedSelectButton()));
+    connect(ui->selectPushButton, SIGNAL(clicked()), this,
+            SIGNAL(clickedSelectButton()));
+
+    selectStatement = "SELECT s.order_id, "
+                      "s.client_id, "
+                      "s.product_id, "
+                      "c.client_name, "
+                      "c.phone_number, "
+                      "c.address, "
+                      "p.product_name, "
+                      "p.price, "
+                      "s.quantity, "
+                      "s.amount "
+                      "FROM SHOPPING s, CLIENT c, PRODUCT p "
+                      "WHERE s.client_id = c.client_id "
+                      "AND s.product_id = p.product_id";
 
     // 주문 관리 DB Model 생성
     orderQueryModel = new QSqlQueryModel;
     // 전체 DB를 출력하는 초기화
-    orderQueryModel->setQuery("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, s.amount "
-                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-                              "s.client_id = c.client_id AND s.product_id = "
-                              "p.product_id;");
+    orderQueryModel->setQuery(selectStatement + ';');
     orderQueryModel->setHeaderData(0, Qt::Horizontal, tr("ID"));
     orderQueryModel->setHeaderData(3, Qt::Horizontal, tr("Client Name"));
     orderQueryModel->setHeaderData(4, Qt::Horizontal, tr("Phone Number"));
@@ -127,12 +137,7 @@ void OrderForm::clearLineEdit()
     ui->quantitySpinBox->clear();
     ui->amountLineEdit->clear();
     // 전체 DB를 출력하도록 초기화
-    orderQueryModel->setQuery("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, s.amount "
-                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-                              "s.client_id = c.client_id AND s.product_id = "
-                              "p.product_id;");
+    orderQueryModel->setQuery(selectStatement + ';');
     ui->tableView->hideColumn(1);   // 사용자에게 고객 ID, 상품 ID를 숨김
     ui->tableView->hideColumn(2);
 }
@@ -182,12 +187,7 @@ void OrderForm::selectReturnPressedId()
     QString id = ui->orderIdLineEdit->text();   // 검색을 위한 id를 문자열로 저장
     // id를 통해 DB를 검색하는 쿼리문을 문자열로 저장
     QString instruction =
-            QString("SELECT s.order_id, s.client_id, s.product_id, "
-                    "c.client_name, c.phone_number, c.address, p.product_name, "
-                    "p.price, s.quantity, s.amount FROM SHOPPING s, CLIENT c, "
-                    "PRODUCT p WHERE s.client_id = c.client_id AND "
-                    "s.product_id = p.product_id AND s.order_id = %1;")
-            .arg(id);
+            QString(selectStatement + " AND s.order_id = %1;").arg(id);
     orderQueryModel->setQuery(instruction); // 쿼리문 실행
 }
 
@@ -202,58 +202,28 @@ void OrderForm::selectReturnPressedLineEdit()
     // 검색할 내용이 저장된 라인에디터에 맞는 검색 쿼리문 저장
     if( lineEdit->objectName() == "clientNameLineEdit" ){
         QString clientName = ui->clientNameLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, "
-                              "s.amount FROM SHOPPING s, CLIENT c, "
-                              "PRODUCT p WHERE s.client_id = c.client_id "
-                              "AND s.product_id = p.product_id "
-                              "AND c.client_name = '%1';").arg(clientName);
+        instruction = QString(selectStatement + "AND c.client_name = '%1';")
+                .arg(clientName);
     } else if( lineEdit->objectName() == "clientPhoneNumLineEdit" ){
         QString phoneNum = ui->clientPhoneNumLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, "
-                              "s.product_id, c.client_name, "
-                              "c.phone_number, c.address, "
-                              "p.product_name, p.price, "
-                              "s.quantity, s.amount FROM "
-                              "SHOPPING s, CLIENT c, PRODUCT p "
-                              "WHERE s.client_id = c.client_id "
-                              "AND s.product_id = p.product_id "
-                              "AND c.phone_number = '%1';").arg(phoneNum);
+        instruction = QString(selectStatement + " AND c.phone_number = '%1';")
+                .arg(phoneNum);
     } else if( lineEdit->objectName() == "clientAddressLineEdit" ){
         QString address = ui->clientAddressLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, "
-                              "s.amount FROM SHOPPING s, CLIENT c, PRODUCT p "
-                              "WHERE s.client_id = c.client_id "
-                              "AND s.product_id = p.product_id AND "
-                              "c.address = '%1';").arg(address);
+        instruction = QString(selectStatement + " AND c.address = '%1';")
+                .arg(address);
     } else if( lineEdit->objectName() == "productNameLineEdit" ){
         QString productName = ui->productNameLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, s.amount "
-                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-                              "s.client_id = c.client_id AND s.product_id = "
-                              "p.product_id AND p.product_name = '%1';")
+        instruction = QString(selectStatement + " AND p.product_name = '%1';")
                 .arg(productName);
     } else if( lineEdit->objectName() == "productPriceLineEdit" ){
         QString price = ui->productPriceLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, s.amount "
-                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-                              "s.client_id = c.client_id AND s.product_id = "
-                              "p.product_id AND p.price = '%1';").arg(price);
+        instruction = QString(selectStatement + " AND p.price = '%1';")
+                .arg(price);
     } else if( lineEdit->objectName() == "amountLineEdit" ){
         QString amount = ui->amountLineEdit->text();
-        instruction = QString("SELECT s.order_id, s.client_id, s.product_id, "
-                              "c.client_name, c.phone_number, c.address, "
-                              "p.product_name, p.price, s.quantity, s.amount "
-                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-                              "s.client_id = c.client_id AND s.product_id = "
-                              "p.product_id AND s.amount = '%1';").arg(amount);
+        instruction = QString(selectStatement + " AND s.amount = '%1';")
+                .arg(amount);
     } else {
         return;     // 해당하는 객체 이름이 존재하지 않을 경우 함수 종료
     }
@@ -272,12 +242,6 @@ void OrderForm::modifyTableRow()
             .arg(orderId).arg(clientId).arg(productId).arg(quantity)
             .arg(amount);
     orderQueryModel->setQuery(instruction); // 쿼리문 실행
-//    orderQueryModel->setQuery("SELECT s.order_id, s.client_id, s.product_id, "
-//                              "c.client_name, c.phone_number, c.address, "
-//                              "p.product_name, p.price, s.quantity, s.amount "
-//                              "FROM SHOPPING s, CLIENT c, PRODUCT p WHERE "
-//                              "s.client_id = c.client_id AND s.product_id = "
-//                              "p.product_id;");
     clearLineEdit();
 }
 

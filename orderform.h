@@ -29,6 +29,7 @@ private:
     QString productStock;
 
     QSqlQueryModel* orderQueryModel;    // 주문 관리 DB 모델
+    QString selectStatement;
 
 signals:
     void clickedSelectButton(); // 고객 정보와 상품 정보를 선택하기 위해 다이얼로그를 실행하는 시그널

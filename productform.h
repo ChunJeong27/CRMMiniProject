@@ -26,6 +26,7 @@ private:
 private:
     QList<QTableWidgetItem*> searchingList; // 검색결과를 임시로 저장하는 리스트
 
+private:
     QSqlQueryModel* productQueryModel;
 
 signals:
