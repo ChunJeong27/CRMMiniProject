@@ -202,7 +202,7 @@ void OrderForm::selectReturnPressedLineEdit()
     // 검색할 내용이 저장된 라인에디터에 맞는 검색 쿼리문 저장
     if( lineEdit->objectName() == "clientNameLineEdit" ){
         QString clientName = ui->clientNameLineEdit->text();
-        instruction = QString(selectStatement + "AND c.client_name = '%1';")
+        instruction = QString(selectStatement + " AND c.client_name = '%1';")
                 .arg(clientName);
     } else if( lineEdit->objectName() == "clientPhoneNumLineEdit" ){
         QString phoneNum = ui->clientPhoneNumLineEdit->text();
